@@ -27,7 +27,7 @@ import (
 	"github.com/kardiachain/go-kaiclient/types"
 )
 
-type ClientInterface interface {
+type Client interface {
 	LatestBlockNumber(ctx context.Context) (uint64, error)
 	BlockByHash(ctx context.Context, hash string) (*types.Block, error)
 	BlockByHeight(ctx context.Context, height uint64) (*types.Block, error)

@@ -3,7 +3,7 @@ package types
 import (
 	"time"
 
-	"github.com/kardiachain/go-kardiamain/types"
+	"github.com/kardiachain/go-kardia/types"
 )
 
 type Transaction struct {
