@@ -21,9 +21,10 @@ package kardia
 import (
 	"context"
 
-	"github.com/kardiachain/explorer-backend/types"
-	"github.com/kardiachain/go-kardiamain/lib/common"
+	"github.com/kardiachain/go-kardia/lib/common"
 	"go.uber.org/zap"
+
+	"github.com/kardiachain/go-kaiclient/types"
 )
 
 type ClientInterface interface {
