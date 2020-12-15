@@ -16,10 +16,10 @@
  *  along with the go-kardia library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package types
+package kardia
 
-type ActiveAddress struct {
-	Address    string `json:"address" bson:"address"`
-	Balance    string `json:"balance" bson:"balance"`
-	IsContract bool   `json:"isContract" bson:"isContract"`
-}
+const (
+	// contract keys
+	StakingContractKey   = "staking"
+	ValidatorContractKey = "validator"
+)

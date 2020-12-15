@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 KardiaChain
+ *  Copyright 2020 KardiaChain
  *  This file is part of the go-kardia library.
  *
  *  The go-kardia library is free software: you can redistribute it and/or modify
@@ -23,13 +23,20 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"os"
+	"path"
+	"runtime"
 	"sort"
 	"strings"
 
+	"github.com/kardiachain/go-kardia/configs"
+
 	"go.uber.org/zap"
 
-	"github.com/kardiachain/go-kardia"
+	kardia "github.com/kardiachain/go-kardia"
+	"github.com/kardiachain/go-kardia/lib/abi"
 	"github.com/kardiachain/go-kardia/lib/common"
+	"github.com/kardiachain/go-kardia/mainchain/staking"
 	"github.com/kardiachain/go-kardia/rpc"
 
 	"github.com/kardiachain/go-kaiclient/types"
@@ -49,17 +56,21 @@ type RPCClient struct {
 	ip     string
 }
 
-// client return an *rpc.client instance
-type client struct {
+// Client return an *rpc.Client instance
+type Client struct {
 	clientList        []*RPCClient
 	trustedClientList []*RPCClient
 	defaultClient     *RPCClient
 	numRequest        int
-	lgr               *zap.Logger
+
+	stakingUtil   *staking.StakingSmcUtil
+	validatorUtil *staking.ValidatorSmcUtil
+
+	lgr *zap.Logger
 }
 
 // NewKaiClient creates a client that uses the given RPC client.
-func NewKaiClient(cfg *Config) (Client, error) {
+func NewKaiClient(cfg *Config) (ClientInterface, error) {
 	if len(cfg.rpcURL) == 0 && len(cfg.trustedNodeRPCURL) == 0 {
 		return nil, errors.New("empty RPC URL")
 	}
@@ -96,10 +107,39 @@ func NewKaiClient(cfg *Config) (Client, error) {
 	// set default RPC client as one of our trusted ones
 	defaultClient = trustedClientList[0]
 
-	return &client{clientList, trustedClientList, defaultClient, 0, cfg.lgr}, nil
+	_, filename, _, _ := runtime.Caller(1)
+	stakingABI, err := os.Open(path.Join(path.Dir(filename), "../kardia/abi/staking.json"))
+	if err != nil {
+		panic("cannot read staking ABI file")
+	}
+	stakingSmcABI, err := abi.JSON(stakingABI)
+	if err != nil {
+		cfg.lgr.Error("Error reading staking contract abi", zap.Error(err))
+		return nil, err
+	}
+	stakingUtil := &staking.StakingSmcUtil{
+		Abi:             &stakingSmcABI,
+		ContractAddress: common.HexToAddress(configs.StakingContract.Address),
+		Bytecode:        configs.StakingContract.ByteCode,
+	}
+	validatorABI, err := os.Open(path.Join(path.Dir(filename), "../kardia/abi/validator.json"))
+	if err != nil {
+		panic("cannot read staking ABI file")
+	}
+	validatorSmcAbi, err := abi.JSON(validatorABI)
+	if err != nil {
+		cfg.lgr.Error("Error reading validator contract abi", zap.Error(err))
+		return nil, err
+	}
+	validatorUtil := &staking.ValidatorSmcUtil{
+		Abi:      &validatorSmcAbi,
+		Bytecode: configs.ValidatorContract.ByteCode,
+	}
+
+	return &Client{clientList, trustedClientList, defaultClient, 0, stakingUtil, validatorUtil, cfg.lgr}, nil
 }
 
-func (ec *client) chooseClient() *RPCClient {
+func (ec *Client) chooseClient() *RPCClient {
 	if len(ec.clientList) > 1 {
 		if ec.numRequest == len(ec.clientList)-1 {
 			ec.numRequest = 0
@@ -112,7 +152,7 @@ func (ec *client) chooseClient() *RPCClient {
 }
 
 // LatestBlockNumber gets latest block number
-func (ec *client) LatestBlockNumber(ctx context.Context) (uint64, error) {
+func (ec *Client) LatestBlockNumber(ctx context.Context) (uint64, error) {
 	var result uint64
 	err := ec.defaultClient.c.CallContext(ctx, &result, "kai_blockNumber")
 	return result, err
@@ -121,7 +161,7 @@ func (ec *client) LatestBlockNumber(ctx context.Context) (uint64, error) {
 // BlockByHash returns the given full block.
 //
 // Use HeaderByHash if you don't need all transactions or uncle headers.
-func (ec *client) BlockByHash(ctx context.Context, hash string) (*types.Block, error) {
+func (ec *Client) BlockByHash(ctx context.Context, hash string) (*types.Block, error) {
 	return ec.getBlock(ctx, "kai_getBlockByHash", common.HexToHash(hash))
 }
 
@@ -129,23 +169,23 @@ func (ec *client) BlockByHash(ctx context.Context, hash string) (*types.Block, e
 //
 // Use HeaderByNumber if you don't need all transactions or uncle headers.
 // TODO(trinhdn): If number is nil, the latest known block is returned.
-func (ec *client) BlockByHeight(ctx context.Context, height uint64) (*types.Block, error) {
+func (ec *Client) BlockByHeight(ctx context.Context, height uint64) (*types.Block, error) {
 	return ec.getBlock(ctx, "kai_getBlockByNumber", height)
 }
 
 // BlockHeaderByNumber returns a block header from the current canonical chain.
 // TODO(trinhdn): If number is nil, the latest known block header is returned.
-func (ec *client) BlockHeaderByNumber(ctx context.Context, number uint64) (*types.Header, error) {
+func (ec *Client) BlockHeaderByNumber(ctx context.Context, number uint64) (*types.Header, error) {
 	return ec.getBlockHeader(ctx, "kai_getBlockHeaderByNumber", number)
 }
 
 // BlockHeaderByHash returns the given block header.
-func (ec *client) BlockHeaderByHash(ctx context.Context, hash string) (*types.Header, error) {
+func (ec *Client) BlockHeaderByHash(ctx context.Context, hash string) (*types.Header, error) {
 	return ec.getBlockHeader(ctx, "kai_getBlockHeaderByHash", common.HexToHash(hash))
 }
 
 // GetTransaction returns the transaction with the given hash.
-func (ec *client) GetTransaction(ctx context.Context, hash string) (*types.Transaction, error) {
+func (ec *Client) GetTransaction(ctx context.Context, hash string) (*types.Transaction, error) {
 	var raw *types.Transaction
 	err := ec.chooseClient().c.CallContext(ctx, &raw, "tx_getTransaction", common.HexToHash(hash))
 	if err != nil {
@@ -158,7 +198,7 @@ func (ec *client) GetTransaction(ctx context.Context, hash string) (*types.Trans
 
 // GetTransactionReceipt returns the receipt of a transaction by transaction hash.
 // Note that the receipt is not available for pending transactions.
-func (ec *client) GetTransactionReceipt(ctx context.Context, txHash string) (*types.Receipt, error) {
+func (ec *Client) GetTransactionReceipt(ctx context.Context, txHash string) (*types.Receipt, error) {
 	var r *types.Receipt
 	err := ec.chooseClient().c.CallContext(ctx, &r, "tx_getTransactionReceipt", common.HexToHash(txHash))
 	if err == nil {
@@ -171,7 +211,7 @@ func (ec *client) GetTransactionReceipt(ctx context.Context, txHash string) (*ty
 
 // BalanceAt returns the wei balance of the given account.
 // The block number can be nil, in which case the balance is taken from the latest known block.
-func (ec *client) GetBalance(ctx context.Context, account string) (string, error) {
+func (ec *Client) GetBalance(ctx context.Context, account string) (string, error) {
 	var (
 		result string
 		err    error
@@ -182,7 +222,7 @@ func (ec *client) GetBalance(ctx context.Context, account string) (string, error
 
 // StorageAt returns the value of key in the contract storage of the given account.
 // The block number can be nil, in which case the value is taken from the latest known block.
-func (ec *client) GetStorageAt(ctx context.Context, account string, key string) (common.Bytes, error) {
+func (ec *Client) GetStorageAt(ctx context.Context, account string, key string) (common.Bytes, error) {
 	var result common.Bytes
 	err := ec.chooseClient().c.CallContext(ctx, &result, "kai_getStorageAt", common.HexToAddress(account), key, "latest")
 	return result, err
@@ -190,14 +230,14 @@ func (ec *client) GetStorageAt(ctx context.Context, account string, key string) 
 
 // CodeAt returns the contract code of the given account.
 // The block number can be nil, in which case the code is taken from the latest known block.
-func (ec *client) GetCode(ctx context.Context, account string) (common.Bytes, error) {
+func (ec *Client) GetCode(ctx context.Context, account string) (common.Bytes, error) {
 	var result common.Bytes
 	err := ec.chooseClient().c.CallContext(ctx, &result, "kai_getCode", common.HexToAddress(account), "latest")
 	return result, err
 }
 
 // NonceAt returns the account nonce of the given account.
-func (ec *client) NonceAt(ctx context.Context, account string) (uint64, error) {
+func (ec *Client) NonceAt(ctx context.Context, account string) (uint64, error) {
 	var result uint64
 	err := ec.chooseClient().c.CallContext(ctx, &result, "account_nonce", common.HexToAddress(account))
 	return result, err
@@ -207,17 +247,26 @@ func (ec *client) NonceAt(ctx context.Context, account string) (uint64, error) {
 //
 // If the transaction was a contract creation use the GetTransactionReceipt method to get the
 // contract address after the transaction has been mined.
-func (ec *client) SendRawTransaction(ctx context.Context, tx string) error {
+func (ec *Client) SendRawTransaction(ctx context.Context, tx string) error {
 	return ec.chooseClient().c.CallContext(ctx, nil, "tx_sendRawTransaction", tx)
 }
 
-func (ec *client) Peers(ctx context.Context, client *RPCClient) ([]*types.PeerInfo, error) {
+func (ec *Client) KardiaCall(ctx context.Context, args types.CallArgsJSON) (common.Bytes, error) {
+	var result common.Bytes
+	err := ec.chooseClient().c.CallContext(ctx, &result, "kai_kardiaCall", args, "latest")
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (ec *Client) Peers(ctx context.Context, client *RPCClient) ([]*types.PeerInfo, error) {
 	var result []*types.PeerInfo
 	err := client.c.CallContext(ctx, &result, "node_peers")
 	return result, err
 }
 
-func (ec *client) NodesInfo(ctx context.Context) ([]*types.NodeInfo, error) {
+func (ec *Client) NodesInfo(ctx context.Context) ([]*types.NodeInfo, error) {
 	var (
 		nodes = []*types.NodeInfo(nil)
 		err   error
@@ -246,13 +295,13 @@ func (ec *client) NodesInfo(ctx context.Context) ([]*types.NodeInfo, error) {
 	return nodes, nil
 }
 
-func (ec *client) Datadir(ctx context.Context) (string, error) {
+func (ec *Client) Datadir(ctx context.Context) (string, error) {
 	var result string
 	err := ec.chooseClient().c.CallContext(ctx, &result, "node_datadir")
 	return result, err
 }
 
-func (ec *client) Validator(ctx context.Context, address string) (*types.Validator, error) {
+func (ec *Client) Validator(ctx context.Context, address string) (*types.Validator, error) {
 	var validator *types.Validator
 	err := ec.defaultClient.c.CallContext(ctx, &validator, "kai_validator", address, true)
 	if err != nil {
@@ -261,7 +310,7 @@ func (ec *client) Validator(ctx context.Context, address string) (*types.Validat
 	return validator, nil
 }
 
-func (ec *client) Validators(ctx context.Context) (*types.Validators, error) {
+func (ec *Client) Validators(ctx context.Context) (*types.Validators, error) {
 	var validators []*types.Validator
 	err := ec.defaultClient.c.CallContext(ctx, &validators, "kai_validators", true)
 	if err != nil {
@@ -300,7 +349,28 @@ func (ec *client) Validators(ctx context.Context) (*types.Validators, error) {
 		jAmount, _ := new(big.Int).SetString(validators[j].StakedAmount, 10)
 		return iAmount.Cmp(jAmount) == 1
 	})
-	for _, val := range validators {
+	// compare staked amount btw validators to determine their status
+	minStakedAmount, ok := new(big.Int).SetString(cfg.MinStakedAmount, 10)
+	if !ok {
+		ec.lgr.Error("error parsing MinStakedAmount to big.Int:", zap.String("MinStakedAmount", cfg.MinStakedAmount), zap.Any("value", minStakedAmount))
+	}
+	totalProposers := 0
+	for i, val := range validators {
+		valInfo, err := ec.GetValidatorInfo(ctx, val.SmcAddress)
+		if err != nil {
+			return nil, err
+		}
+		val.Status = valInfo.Status
+		if stakedAmount, ok := new(big.Int).SetString(validators[i].StakedAmount, 10); ok {
+			if stakedAmount.Cmp(minStakedAmount) == -1 || val.Status < 2 {
+				val.Role = 0 // validator who has staked under 12.5M KAI is considers a registered one
+			} else if totalProposers < cfg.TotalProposers {
+				val.Role = 2 // validator who has staked over 12.5M KAI and belong to top 20 of validator based on voting power is considered a proposer
+				totalProposers++
+			} else {
+				val.Role = 1 // validator who has staked over 12.5M KAI and not belong to top 20 of validator based on voting power is considered a normal validator
+			}
+		}
 		if val, err = convertValidatorInfo(val, totalStakedAmount); err != nil {
 			return nil, err
 		}
@@ -311,13 +381,13 @@ func (ec *client) Validators(ctx context.Context) (*types.Validators, error) {
 		TotalStakedAmount:          totalStakedAmount.String(),
 		TotalValidatorStakedAmount: new(big.Int).Sub(totalStakedAmount, totalDelegatorStakedAmount).String(),
 		TotalDelegatorStakedAmount: totalDelegatorStakedAmount.String(),
-		TotalProposer:              21, // TODO(trinhdn): follow core API updates
+		TotalProposer:              totalProposers,
 		Validators:                 validators,
 	}
 	return result, nil
 }
 
-func (ec *client) getBlock(ctx context.Context, method string, args ...interface{}) (*types.Block, error) {
+func (ec *Client) getBlock(ctx context.Context, method string, args ...interface{}) (*types.Block, error) {
 	var raw types.Block
 	err := ec.defaultClient.c.CallContext(ctx, &raw, method, args...)
 	if err != nil {
@@ -326,7 +396,7 @@ func (ec *client) getBlock(ctx context.Context, method string, args ...interface
 	return &raw, nil
 }
 
-func (ec *client) getBlockHeader(ctx context.Context, method string, args ...interface{}) (*types.Header, error) {
+func (ec *Client) getBlockHeader(ctx context.Context, method string, args ...interface{}) (*types.Header, error) {
 	var raw types.Header
 	err := ec.defaultClient.c.CallContext(ctx, &raw, method, args...)
 	if err != nil {
@@ -337,7 +407,6 @@ func (ec *client) getBlockHeader(ctx context.Context, method string, args ...int
 
 func convertValidatorInfo(val *types.Validator, totalStakedAmount *big.Int) (*types.Validator, error) {
 	var err error
-	val.Commission = ""
 	if val.CommissionRate, err = convertBigIntToPercentage(val.CommissionRate); err != nil {
 		return nil, err
 	}

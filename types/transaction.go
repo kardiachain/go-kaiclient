@@ -1,6 +1,7 @@
 package types
 
 import (
+	"math/big"
 	"time"
 
 	"github.com/kardiachain/go-kardia/types"
@@ -63,4 +64,13 @@ type TransactionByAddress struct {
 	Address string    `json:"address" bson:"address"`
 	TxHash  string    `json:"txHash" bson:"txHash"`
 	Time    time.Time `json:"time" bson:"time"`
+}
+
+type CallArgsJSON struct {
+	From     string   `json:"from"`     // the sender of the 'transaction'
+	To       *string  `json:"to"`       // the destination contract (nil for contract creation)
+	Gas      uint64   `json:"gas"`      // if 0, the call executes with near-infinite gas
+	GasPrice *big.Int `json:"gasPrice"` // wei <-> gas exchange ratio
+	Value    *big.Int `json:"value"`    // amount of wei sent along with the call
+	Data     string   `json:"data"`     // input data, usually an ABI-encoded contract method invocation
 }

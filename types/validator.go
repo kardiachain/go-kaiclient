@@ -2,6 +2,8 @@
 package types
 
 import (
+	"math/big"
+
 	"github.com/kardiachain/go-kardia/lib/common"
 )
 
@@ -17,11 +19,12 @@ type Validators struct {
 
 type Validator struct {
 	Address               common.Address `json:"address"`
+	SmcAddress            common.Address `json:"smcAddress"`
+	Status                uint8          `json:"status"`
+	Role                  int            `json:"role"`
 	Name                  string         `json:"name,omitempty"`
-	VotingPower           int64          `json:"votingPower"`
 	VotingPowerPercentage string         `json:"votingPowerPercentage"`
 	StakedAmount          string         `json:"stakedAmount"`
-	Commission            string         `json:"commission"`
 	CommissionRate        string         `json:"commissionRate"`
 	TotalDelegators       int            `json:"totalDelegators"`
 	MaxRate               string         `json:"maxRate"`
@@ -65,4 +68,26 @@ type NodeInfo struct {
 	Moniker         string               `json:"moniker"`         // arbitrary moniker
 	Peers           []*PeerInfo          `json:"peers,omitempty"` // peers details
 	Other           DefaultNodeInfoOther `json:"other"`           // other application specific data
+}
+
+type ValidatorsByDelegator struct {
+	Name                  string         `json:"name"`
+	Validator             common.Address `json:"validator"`
+	ValidatorContractAddr common.Address `json:"validatorContractAddr"`
+	ValidatorStatus       uint8          `json:"validatorStatus"`
+	StakedAmount          string         `json:"stakedAmount"`
+	ClaimableRewards      string         `json:"claimableRewards"`
+	UnbondedAmount        string         `json:"unbondedAmount"`
+	WithdrawableAmount    string         `json:"withdrawableAmount"`
+}
+
+type ValidatorParams struct {
+	DowntimeJailDuration    *big.Int
+	SlashFractionDowntime   *big.Int
+	UnbondingTime           *big.Int
+	SlashFractionDoubleSign *big.Int
+	SignedBlockWindow       uint
+	MinSignedPerWindow      *big.Int
+	MinStake                *big.Int
+	MinValidatorBalance     *big.Int
 }
