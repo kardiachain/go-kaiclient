@@ -16,10 +16,12 @@
  *  along with the go-kardia library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package types
+package kardia
 
-type ActiveAddress struct {
-	Address    string `json:"address" bson:"address"`
-	Balance    string `json:"balance" bson:"balance"`
-	IsContract bool   `json:"isContract" bson:"isContract"`
-}
+import "errors"
+
+var (
+	ErrNotAValidatorAddress = errors.New("address is not a validator")
+	ErrMethodNotFound       = errors.New("abi: could not locate named method or event")
+	ErrEmptyList            = errors.New("empty list")
+)
