@@ -1,3 +1,20 @@
+/*
+ *  Copyright 2020 KardiaChain
+ *  This file is part of the go-kardia library.
+ *
+ *  The go-kardia library is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  The go-kardia library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public License
+ *  along with the go-kardia library. If not, see <http://www.gnu.org/licenses/>.
+ */
 package types
 
 import (
@@ -11,23 +28,31 @@ type Transaction struct {
 	BlockHash   string `json:"blockHash" bson:"blockHash"`
 	BlockNumber uint64 `json:"blockNumber" bson:"blockNumber"`
 
-	Hash             string      `json:"hash" bson:"hash"`
-	From             string      `json:"from" bson:"from"`
-	To               string      `json:"to" bson:"to"`
-	Status           uint        `json:"status" bson:"status"`
-	ContractAddress  string      `json:"contractAddress" bson:"contractAddress"`
-	Value            string      `json:"value" bson:"value"`
-	GasPrice         uint64      `json:"gasPrice" bson:"gasPrice"`
-	GasLimit         uint64      `json:"gas" bson:"gas"`
-	GasUsed          uint64      `json:"gasUsed"`
-	TxFee            string      `json:"txFee"`
-	Nonce            uint64      `json:"nonce" bson:"nonce"`
-	Time             time.Time   `json:"time" bson:"time"`
-	InputData        string      `json:"input" bson:"input"`
-	Logs             []Log       `json:"logs" bson:"logs"`
-	TransactionIndex uint        `json:"transactionIndex"`
-	LogsBloom        types.Bloom `json:"logsBloom"`
-	Root             string      `json:"root"`
+	Hash             string        `json:"hash" bson:"hash"`
+	From             string        `json:"from" bson:"from"`
+	To               string        `json:"to" bson:"to"`
+	Status           uint          `json:"status" bson:"status"`
+	ContractAddress  string        `json:"contractAddress" bson:"contractAddress"`
+	Value            string        `json:"value" bson:"value"`
+	GasPrice         uint64        `json:"gasPrice" bson:"gasPrice"`
+	GasLimit         uint64        `json:"gas" bson:"gas"`
+	GasUsed          uint64        `json:"gasUsed"`
+	TxFee            string        `json:"txFee"`
+	Nonce            uint64        `json:"nonce" bson:"nonce"`
+	Time             time.Time     `json:"time" bson:"time"`
+	InputData        string        `json:"input" bson:"input"`
+	DecodedInputData *FunctionCall `json:"decodedInputData,omitempty" bson:"decodedInputData"`
+	Logs             []Log         `json:"logs" bson:"logs"`
+	TransactionIndex uint          `json:"transactionIndex"`
+	LogsBloom        types.Bloom   `json:"logsBloom"`
+	Root             string        `json:"root"`
+}
+
+type FunctionCall struct {
+	Function   string                 `json:"function"`
+	MethodID   string                 `json:"methodID"`
+	MethodName string                 `json:"methodName"`
+	Arguments  map[string]interface{} `json:"arguments"`
 }
 
 type Log struct {

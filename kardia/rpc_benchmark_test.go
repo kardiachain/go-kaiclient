@@ -69,7 +69,7 @@ func BenchmarkBalanceAt(b *testing.B) {
 	client, ctx, testSuite, err := SetupKAIClient()
 	assert.Nil(b, err)
 	for i := 0; i < b.N; i++ {
-		_, _ = client.BalanceAt(ctx, testSuite.address, nil)
+		_, _ = client.GetBalance(ctx, testSuite.address)
 	}
 }
 
@@ -85,7 +85,7 @@ func BenchmarkGetTransaction(b *testing.B) {
 	client, ctx, testSuite, err := SetupKAIClient()
 	assert.Nil(b, err)
 	for i := 0; i < b.N; i++ {
-		_, _, _ = client.GetTransaction(ctx, testSuite.txHash)
+		_, _ = client.GetTransaction(ctx, testSuite.txHash)
 	}
 }
 
@@ -94,14 +94,6 @@ func BenchmarkGetTransactionReceipt(b *testing.B) {
 	assert.Nil(b, err)
 	for i := 0; i < b.N; i++ {
 		_, _ = client.GetTransactionReceipt(ctx, testSuite.txHash)
-	}
-}
-
-func BenchmarkPeers(b *testing.B) {
-	client, ctx, _, err := SetupKAIClient()
-	assert.Nil(b, err)
-	for i := 0; i < b.N; i++ {
-		_, _ = client.Peers(ctx)
 	}
 }
 
@@ -134,7 +126,7 @@ func BenchmarkValidator(b *testing.B) {
 	client, ctx, _, err := SetupKAIClient()
 	assert.Nil(b, err)
 	for i := 0; i < b.N; i++ {
-		_, _ = client.Validator(ctx)
+		_, _ = client.Validator(ctx, "")
 	}
 }
 

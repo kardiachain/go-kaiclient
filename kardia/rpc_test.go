@@ -37,8 +37,8 @@ import (
 	"github.com/kardiachain/go-kardia/lib/p2p"
 	coreTypes "github.com/kardiachain/go-kardia/types"
 
-	"github.com/kardiachain/explorer-backend/metrics"
-	"github.com/kardiachain/explorer-backend/types"
+	"github.com/kardiachain/go-kaiclient/metrics"
+	"github.com/kardiachain/go-kaiclient/types"
 )
 
 type testSuite struct {

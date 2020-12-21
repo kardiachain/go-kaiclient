@@ -17,9 +17,3 @@
  */
 
 package kardia
-
-const (
-	// contract keys
-	StakingContractKey   = "staking"
-	ValidatorContractKey = "validator"
-)

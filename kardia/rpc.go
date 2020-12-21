@@ -1,5 +1,5 @@
 /*
- *  Copyright 2020 KardiaChain
+ *  Copyright 2018 KardiaChain
  *  This file is part of the go-kardia library.
  *
  *  The go-kardia library is free software: you can redistribute it and/or modify
@@ -23,18 +23,13 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"os"
-	"path"
-	"runtime"
 	"sort"
 	"strings"
-
-	"github.com/kardiachain/go-kardia/configs"
+	"time"
 
 	"go.uber.org/zap"
 
 	kardia "github.com/kardiachain/go-kardia"
-	"github.com/kardiachain/go-kardia/lib/abi"
 	"github.com/kardiachain/go-kardia/lib/common"
 	"github.com/kardiachain/go-kardia/mainchain/staking"
 	"github.com/kardiachain/go-kardia/rpc"
@@ -43,9 +38,6 @@ import (
 )
 
 var (
-	ErrParsingBigIntFromString = errors.New("cannot parse string to big.Int")
-	ErrValidatorNotFound       = errors.New("validator address not found")
-
 	tenPoweredBy5  = new(big.Int).Exp(big.NewInt(10), big.NewInt(5), nil)
 	tenPoweredBy18 = new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)
 )
@@ -70,16 +62,17 @@ type Client struct {
 }
 
 // NewKaiClient creates a client that uses the given RPC client.
-func NewKaiClient(cfg *Config) (ClientInterface, error) {
-	if len(cfg.rpcURL) == 0 && len(cfg.trustedNodeRPCURL) == 0 {
+func NewKaiClient(config *Config) (ClientInterface, error) {
+	if len(config.rpcURL) == 0 && len(config.trustedNodeRPCURL) == 0 {
 		return nil, errors.New("empty RPC URL")
 	}
 
 	var (
-		defaultClient *RPCClient = nil
-		clientList               = []*RPCClient{}
+		defaultClient     *RPCClient = nil
+		clientList        []*RPCClient
+		trustedClientList []*RPCClient
 	)
-	for _, u := range cfg.rpcURL {
+	for _, u := range config.rpcURL {
 		rpcClient, err := rpc.Dial(u)
 		if err != nil {
 			return nil, err
@@ -91,8 +84,7 @@ func NewKaiClient(cfg *Config) (ClientInterface, error) {
 		}
 		clientList = append(clientList, newClient)
 	}
-	var trustedClientList = []*RPCClient{}
-	for _, u := range cfg.trustedNodeRPCURL {
+	for _, u := range config.trustedNodeRPCURL {
 		rpcClient, err := rpc.Dial(u)
 		if err != nil {
 			return nil, err
@@ -107,36 +99,7 @@ func NewKaiClient(cfg *Config) (ClientInterface, error) {
 	// set default RPC client as one of our trusted ones
 	defaultClient = trustedClientList[0]
 
-	_, filename, _, _ := runtime.Caller(1)
-	stakingABI, err := os.Open(path.Join(path.Dir(filename), "../kardia/abi/staking.json"))
-	if err != nil {
-		panic("cannot read staking ABI file")
-	}
-	stakingSmcABI, err := abi.JSON(stakingABI)
-	if err != nil {
-		cfg.lgr.Error("Error reading staking contract abi", zap.Error(err))
-		return nil, err
-	}
-	stakingUtil := &staking.StakingSmcUtil{
-		Abi:             &stakingSmcABI,
-		ContractAddress: common.HexToAddress(configs.StakingContract.Address),
-		Bytecode:        configs.StakingContract.ByteCode,
-	}
-	validatorABI, err := os.Open(path.Join(path.Dir(filename), "../kardia/abi/validator.json"))
-	if err != nil {
-		panic("cannot read staking ABI file")
-	}
-	validatorSmcAbi, err := abi.JSON(validatorABI)
-	if err != nil {
-		cfg.lgr.Error("Error reading validator contract abi", zap.Error(err))
-		return nil, err
-	}
-	validatorUtil := &staking.ValidatorSmcUtil{
-		Abi:      &validatorSmcAbi,
-		Bytecode: configs.ValidatorContract.ByteCode,
-	}
-
-	return &Client{clientList, trustedClientList, defaultClient, 0, stakingUtil, validatorUtil, cfg.lgr}, nil
+	return &Client{clientList, trustedClientList, defaultClient, 0, config.stakingUtil, config.validatorUtil, config.lgr}, nil
 }
 
 func (ec *Client) chooseClient() *RPCClient {
@@ -260,36 +223,58 @@ func (ec *Client) KardiaCall(ctx context.Context, args types.CallArgsJSON) (comm
 	return result, nil
 }
 
-func (ec *Client) Peers(ctx context.Context, client *RPCClient) ([]*types.PeerInfo, error) {
-	var result []*types.PeerInfo
-	err := client.c.CallContext(ctx, &result, "node_peers")
-	return result, err
-}
-
 func (ec *Client) NodesInfo(ctx context.Context) ([]*types.NodeInfo, error) {
 	var (
-		nodes = []*types.NodeInfo(nil)
+		nodes []*types.NodeInfo
 		err   error
 	)
 	clientList := append(ec.clientList, ec.trustedClientList...)
-	nodeMap := make(map[string]*types.NodeInfo, len(clientList))
+	nodeMap := make(map[string]*types.NodeInfo, len(clientList)) // list all nodes in network
+	peersMap := make(map[string]*types.RPCPeerInfo)              // list all peers details
 	for _, client := range clientList {
 		var (
 			node  *types.NodeInfo
-			peers []*types.PeerInfo
+			peers []*types.RPCPeerInfo
 		)
+		// get current node info then get it's peers
 		err = client.c.CallContext(ctx, &node, "node_nodeInfo")
 		if err != nil {
 			continue
 		}
-		peers, err = ec.Peers(ctx, client)
+		err := client.c.CallContext(ctx, &peers, "node_peers")
 		if err != nil {
 			continue
 		}
-		node.Peers = peers
+		node.Peers = make(map[string]*types.PeerInfo)
+		for _, peer := range peers {
+			// append current peer to this node
+			node.Peers[peer.NodeInfo.ID] = &types.PeerInfo{
+				Moniker:  peer.NodeInfo.Moniker,
+				Duration: peer.ConnectionStatus.Duration,
+				RemoteIP: peer.RemoteIP,
+			}
+			peersMap[peer.NodeInfo.ID] = peer
+			// try to discover new nodes through these peers
+			// init a new node info in list
+			if nodeMap[peer.NodeInfo.ID] == nil {
+				nodeMap[peer.NodeInfo.ID] = peer.NodeInfo
+			}
+			if nodeMap[peer.NodeInfo.ID].Peers == nil {
+				nodeMap[peer.NodeInfo.ID].Peers = make(map[string]*types.PeerInfo)
+			}
+			nodeMap[peer.NodeInfo.ID].Peers[node.ID] = &types.PeerInfo{} // mark this peer for re-updating later
+		}
 		nodeMap[node.ID] = node
 	}
 	for _, node := range nodeMap {
+		// re-update full peers info
+		for id := range node.Peers {
+			node.Peers[id] = &types.PeerInfo{
+				Duration: peersMap[id].ConnectionStatus.Duration,
+				Moniker:  peersMap[id].NodeInfo.Moniker,
+				RemoteIP: peersMap[id].RemoteIP,
+			}
+		}
 		nodes = append(nodes, node)
 	}
 	return nodes, nil
@@ -302,17 +287,40 @@ func (ec *Client) Datadir(ctx context.Context) (string, error) {
 }
 
 func (ec *Client) Validator(ctx context.Context, address string) (*types.Validator, error) {
-	var validator *types.Validator
-	err := ec.defaultClient.c.CallContext(ctx, &validator, "kai_validator", address, true)
+	validator, err := ec.getValidatorFromSMC(ctx, common.HexToAddress(address))
 	if err != nil {
 		return nil, err
 	}
-	return validator, nil
+	signingInfo, err := ec.GetSigningInfo(ctx, validator.ValStakingSmc)
+	if err != nil {
+		return nil, err
+	}
+	valsSet, err := ec.GetValidatorSets(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// update validator's role. If he's in validators set, he is a proposer
+	validator.Status, err = ec.getValidatorStatus(valsSet, validator)
+	if err != nil {
+		return nil, err
+	}
+	return convertValidator(validator, signingInfo), nil
 }
 
 func (ec *Client) Validators(ctx context.Context) (*types.Validators, error) {
-	var validators []*types.Validator
-	err := ec.defaultClient.c.CallContext(ctx, &validators, "kai_validators", true)
+	var (
+		proposersStakedAmount = big.NewInt(0)
+		validators            []*types.RPCValidator
+	)
+	validators, err := ec.getValidatorsFromSMC(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// compare staked amount btw validators to determine their status
+	sort.Slice(validators, func(i, j int) bool {
+		return validators[i].Tokens.Cmp(validators[j].Tokens) == 1
+	})
+	valsSet, err := ec.GetValidatorSets(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -320,69 +328,56 @@ func (ec *Client) Validators(ctx context.Context) (*types.Validators, error) {
 		delegators                 = make(map[string]bool)
 		totalStakedAmount          = big.NewInt(0)
 		totalDelegatorStakedAmount = big.NewInt(0)
-
-		valStakedAmount *big.Int
-		delStakedAmount *big.Int
-		ok              bool
+		totalProposers             = 0
+		totalValidators            = 0
+		totalCandidates            = 0
 	)
-	for _, val := range validators {
+	for i, val := range validators {
 		for _, del := range val.Delegators {
 			delegators[del.Address.Hex()] = true
 			// exclude validator self delegation
-			if del.Address.Equal(val.Address) {
+			if del.Address.Equal(val.ValAddr) {
 				continue
 			}
-			delStakedAmount, ok = new(big.Int).SetString(del.StakedAmount, 10)
-			if !ok {
-				return nil, err
-			}
-			totalDelegatorStakedAmount = new(big.Int).Add(totalDelegatorStakedAmount, delStakedAmount)
+			totalDelegatorStakedAmount = new(big.Int).Add(totalDelegatorStakedAmount, del.StakedAmount)
 		}
-		valStakedAmount, ok = new(big.Int).SetString(val.StakedAmount, 10)
-		if !ok {
-			return nil, err
-		}
-		totalStakedAmount = new(big.Int).Add(totalStakedAmount, valStakedAmount)
-	}
-	sort.Slice(validators, func(i, j int) bool {
-		iAmount, _ := new(big.Int).SetString(validators[i].StakedAmount, 10)
-		jAmount, _ := new(big.Int).SetString(validators[j].StakedAmount, 10)
-		return iAmount.Cmp(jAmount) == 1
-	})
-	// compare staked amount btw validators to determine their status
-	minStakedAmount, ok := new(big.Int).SetString(cfg.MinStakedAmount, 10)
-	if !ok {
-		ec.lgr.Error("error parsing MinStakedAmount to big.Int:", zap.String("MinStakedAmount", cfg.MinStakedAmount), zap.Any("value", minStakedAmount))
-	}
-	totalProposers := 0
-	for i, val := range validators {
-		valInfo, err := ec.GetValidatorInfo(ctx, val.SmcAddress)
+		totalStakedAmount = new(big.Int).Add(totalStakedAmount, val.Tokens)
+		val.Status, err = ec.getValidatorStatus(valsSet, val)
 		if err != nil {
 			return nil, err
 		}
-		val.Status = valInfo.Status
-		if stakedAmount, ok := new(big.Int).SetString(validators[i].StakedAmount, 10); ok {
-			if stakedAmount.Cmp(minStakedAmount) == -1 || val.Status < 2 {
-				val.Role = 0 // validator who has staked under 12.5M KAI is considers a registered one
-			} else if totalProposers < cfg.TotalProposers {
-				val.Role = 2 // validator who has staked over 12.5M KAI and belong to top 20 of validator based on voting power is considered a proposer
-				totalProposers++
-			} else {
-				val.Role = 1 // validator who has staked over 12.5M KAI and not belong to top 20 of validator based on voting power is considered a normal validator
-			}
-		}
-		if val, err = convertValidatorInfo(val, totalStakedAmount); err != nil {
-			return nil, err
+		// validator who started a node and not in validators set is a normal validator
+		if val.Status == 2 {
+			totalProposers++
+			totalValidators++
+			proposersStakedAmount = new(big.Int).Add(proposersStakedAmount, validators[i].Tokens)
+		} else if val.Status == 1 {
+			totalValidators++
+		} else if val.Status == 0 {
+			totalCandidates++
 		}
 	}
+	var returnValsList []*types.Validator
+	for _, val := range validators {
+		signingInfo, err := ec.GetSigningInfo(ctx, val.ValStakingSmc)
+		if err != nil {
+			return nil, err
+		}
+		convertedVal, err := convertValidatorInfo(val, signingInfo, proposersStakedAmount, val.Status)
+		if err != nil {
+			return nil, err
+		}
+		returnValsList = append(returnValsList, convertedVal)
+	}
 	result := &types.Validators{
-		TotalValidators:            len(validators),
+		TotalValidators:            totalValidators,
+		TotalProposers:             totalProposers,
+		TotalCandidates:            totalCandidates,
 		TotalDelegators:            len(delegators),
 		TotalStakedAmount:          totalStakedAmount.String(),
 		TotalValidatorStakedAmount: new(big.Int).Sub(totalStakedAmount, totalDelegatorStakedAmount).String(),
 		TotalDelegatorStakedAmount: totalDelegatorStakedAmount.String(),
-		TotalProposer:              totalProposers,
-		Validators:                 validators,
+		Validators:                 returnValsList,
 	}
 	return result, nil
 }
@@ -405,30 +400,29 @@ func (ec *Client) getBlockHeader(ctx context.Context, method string, args ...int
 	return &raw, nil
 }
 
-func convertValidatorInfo(val *types.Validator, totalStakedAmount *big.Int) (*types.Validator, error) {
+func convertValidatorInfo(srcVal *types.RPCValidator, signingInfo *types.SigningInfo, totalStakedAmount *big.Int, status uint8) (*types.Validator, error) {
 	var err error
-	if val.CommissionRate, err = convertBigIntToPercentage(val.CommissionRate); err != nil {
+	val := convertValidator(srcVal, signingInfo)
+	if val.CommissionRate, err = convertBigIntToPercentage(srcVal.CommissionRate); err != nil {
 		return nil, err
 	}
-	if val.MaxRate, err = convertBigIntToPercentage(val.MaxRate); err != nil {
+	if val.MaxRate, err = convertBigIntToPercentage(srcVal.MaxRate); err != nil {
 		return nil, err
 	}
-	if val.MaxChangeRate, err = convertBigIntToPercentage(val.MaxChangeRate); err != nil {
+	if val.MaxChangeRate, err = convertBigIntToPercentage(srcVal.MaxChangeRate); err != nil {
 		return nil, err
 	}
-	if totalStakedAmount != nil {
-		if val.VotingPowerPercentage, err = calculateVotingPower(val.StakedAmount, totalStakedAmount); err != nil {
+	if totalStakedAmount != nil && status == 2 {
+		if val.VotingPowerPercentage, err = calculateVotingPower(srcVal.Tokens, totalStakedAmount); err != nil {
 			return nil, err
 		}
+	} else {
+		val.VotingPowerPercentage = "0"
 	}
 	return val, nil
 }
 
-func convertBigIntToPercentage(raw string) (string, error) {
-	input, ok := new(big.Int).SetString(raw, 10)
-	if !ok {
-		return "", ErrParsingBigIntFromString
-	}
+func convertBigIntToPercentage(input *big.Int) (string, error) {
 	tmp := new(big.Int).Mul(input, tenPoweredBy18)
 	result := new(big.Int).Div(tmp, tenPoweredBy18).String()
 	result = fmt.Sprintf("%020s", result)
@@ -439,11 +433,7 @@ func convertBigIntToPercentage(raw string) (string, error) {
 	return result, nil
 }
 
-func calculateVotingPower(raw string, total *big.Int) (string, error) {
-	valStakedAmount, ok := new(big.Int).SetString(raw, 10)
-	if !ok {
-		return "", ErrParsingBigIntFromString
-	}
+func calculateVotingPower(valStakedAmount *big.Int, total *big.Int) (string, error) {
 	tmp := new(big.Int).Mul(valStakedAmount, tenPoweredBy5)
 	result := new(big.Int).Div(tmp, total).String()
 	result = fmt.Sprintf("%020s", result)
@@ -452,4 +442,100 @@ func calculateVotingPower(raw string, total *big.Int) (string, error) {
 		result = "0" + result
 	}
 	return result, nil
+}
+
+func (ec *Client) getValidatorsFromSMC(ctx context.Context) ([]*types.RPCValidator, error) {
+	allValsLen, err := ec.GetAllValsLength(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var (
+		one      = big.NewInt(1)
+		valsInfo []*types.RPCValidator
+	)
+	for i := new(big.Int).SetInt64(0); i.Cmp(allValsLen) < 0; i.Add(i, one) {
+		valContractAddr, err := ec.GetValSmcAddr(ctx, i)
+		if err != nil {
+			return nil, err
+		}
+		valInfo, err := ec.GetValidatorInfo(ctx, valContractAddr)
+		if err != nil {
+			continue
+		}
+		valInfo.Delegators, err = ec.GetDelegators(ctx, valContractAddr)
+		if err != nil {
+			return nil, err
+		}
+		valInfo.ValStakingSmc = valContractAddr
+		valsInfo = append(valsInfo, valInfo)
+	}
+	return valsInfo, nil
+}
+
+func (ec *Client) getValidatorFromSMC(ctx context.Context, valAddr common.Address) (*types.RPCValidator, error) {
+	valContractAddr, err := ec.GetValFromOwner(ctx, valAddr)
+	if err != nil {
+		return nil, err
+	}
+	val, err := ec.GetValidatorInfo(ctx, valContractAddr)
+	if err != nil {
+		return nil, err
+	}
+	val.Delegators, err = ec.GetDelegators(ctx, valContractAddr)
+	if err != nil {
+		return nil, err
+	}
+	val.ValStakingSmc = valContractAddr
+	return val, nil
+}
+
+func convertValidator(src *types.RPCValidator, signingInfo *types.SigningInfo) *types.Validator {
+	var name []byte
+	for _, b := range src.Name {
+		if b != 0 {
+			name = append(name, byte(b))
+		}
+	}
+	var delegators []*types.Delegator
+	for _, del := range src.Delegators {
+		delegators = append(delegators, &types.Delegator{
+			Address:      del.Address,
+			StakedAmount: del.StakedAmount.String(),
+			Reward:       del.Reward.String(),
+		})
+	}
+	indicatorRate := 100 - float64(signingInfo.MissedBlockCounter)/100
+	return &types.Validator{
+		Address:               src.ValAddr,
+		SmcAddress:            src.ValStakingSmc,
+		Status:                src.Status,
+		Jailed:                src.Jailed,
+		Name:                  string(name),
+		VotingPowerPercentage: "",
+		StakedAmount:          src.Tokens.String(),
+		AccumulatedCommission: src.AccumulatedCommission.String(),
+		UpdateTime:            time.Unix(src.UpdateTime.Int64(), 0),
+		CommissionRate:        "",
+		TotalDelegators:       len(src.Delegators),
+		MaxRate:               "",
+		MaxChangeRate:         "",
+		MissedBlocks:          signingInfo.MissedBlockCounter,
+		IndicatorRate:         indicatorRate,
+		Delegators:            delegators,
+	}
+}
+
+func (ec *Client) getValidatorStatus(valsSet []common.Address, validator *types.RPCValidator) (uint8, error) {
+	// if he's in validators set, he is a proposer
+	for _, val := range valsSet {
+		if val.Equal(validator.ValAddr) {
+			return 2, nil
+		}
+	}
+	// else if his node is started, he is a normal validator
+	if validator.Status == 2 {
+		return 1, nil
+	}
+	// otherwise he is a candidate
+	return 0, nil
 }

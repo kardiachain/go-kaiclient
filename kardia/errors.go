@@ -21,5 +21,7 @@ package kardia
 import "errors"
 
 var (
-	ErrNotFound = errors.New("KaiClient: not found")
+	ErrNotAValidatorAddress = errors.New("address is not a validator")
+	ErrMethodNotFound       = errors.New("abi: could not locate named method or event")
+	ErrEmptyList            = errors.New("empty list")
 )
