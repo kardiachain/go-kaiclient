@@ -33,10 +33,6 @@ type Block struct {
 	AppHash           string `json:"appHash,omitempty" bson:"appHash"`
 	EvidenceHash      string `json:"evidenceHash,omitempty" bson:"evidenceHash"`
 
-	// Dual nodes
-	NumDualEvents  uint64 `json:"numDualEvents,omitempty" bson:"numDualEvents"`
-	DualEventsHash string `json:"dualEventsHash,omitempty" bson:"dualEventsHash"`
-
 	Txs      []*Transaction `json:"txs,omitempty" bson:"-"`
 	Receipts []*Receipt     `json:"receipts,omitempty" bson:"-"`
 }
@@ -125,14 +121,7 @@ type SMCCallArgs struct {
 }
 
 type Receipt struct {
-	BlockHash   string `json:"blockHash"`
-	BlockHeight uint64 `json:"blockHeight"`
-
-	TransactionHash  string `json:"transactionHash"`
-	TransactionIndex uint64 `json:"transactionIndex"`
-
-	From              string      `json:"from"`
-	To                string      `json:"to"`
+	TransactionHash   string      `json:"transactionHash"`
 	GasUsed           uint64      `json:"gasUsed"`
 	CumulativeGasUsed uint64      `json:"cumulativeGasUsed"`
 	ContractAddress   string      `json:"contractAddress"`
@@ -150,44 +139,36 @@ type FunctionCall struct {
 }
 
 type Log struct {
-	Address     string `json:"address"`
-	Name        string `json:"name"`
-	MethodName  string `json:"methodName"`
-	Params      []string
-	Arguments   map[string]interface{} `json:"arguments"`
-	Topics      []string               `json:"topics"`
-	Data        string                 `json:"data"`
-	BlockHeight uint64                 `json:"blockHeight"`
-	TxHash      string                 `json:"transactionHash"`
-	TxIndex     uint                   `json:"transactionIndex"`
-	BlockHash   string                 `json:"blockHash"`
-	Index       uint                   `json:"logIndex"`
-	Removed     bool                   `json:"removed"`
+	Address     string   `json:"address"`
+	Topics      []string `json:"topics"`
+	Data        string   `json:"data"`
+	BlockHeight uint64   `json:"blockHeight"`
+	TxHash      string   `json:"transactionHash"`
+	TxIndex     uint     `json:"transactionIndex"`
+	BlockHash   string   `json:"blockHash"`
+	Index       uint     `json:"logIndex"`
+	Removed     bool     `json:"removed"`
 }
 
 type Header struct {
-	Hash   string `json:"hash" bson:"blockHash"`
-	Height uint64 `json:"height" bson:"height"`
-
-	CommitHash      string    `json:"commitHash" bson:"commitHash"`
-	GasLimit        uint64    `json:"gasLimit" bson:"gasLimit"`
-	GasUsed         uint64    `json:"gasUsed" bson:"gasUsed"`
-	Rewards         string    `json:"rewards" bson:"rewards"`
-	NumTxs          uint64    `json:"numTxs" bson:"numTxs"`
-	Time            time.Time `json:"time" bson:"time"`
-	ProposerAddress string    `json:"proposerAddress" bson:"proposerAddress"`
-
-	LastBlock string `json:"lastBlock" bson:"lastBlock"`
-
-	DataHash     string `json:"dataHash" bson:"dataHash"`
-	ReceiptsRoot string `json:"receiptsRoot" bson:"receiptsRoot"`
-	LogsBloom    string `json:"logsBloom" bson:"logsBloom"`
-
-	ValidatorHash     string `json:"validatorHash" bson:"validatorHash"`
-	NextValidatorHash string `json:"nextValidatorHash" bson:"nextValidatorHash"` // validators for the next block
-	ConsensusHash     string `json:"consensusHash" bson:"consensusHash"`
-	AppHash           string `json:"appHash" bson:"appHash"`
-	EvidenceHash      string `json:"evidenceHash" bson:"evidenceHash"`
+	Hash              string    `json:"hash"`
+	Height            uint64    `json:"height"`
+	LastBlock         string    `json:"lastBlock"`
+	CommitHash        string    `json:"commitHash"`
+	Time              time.Time `json:"time"`
+	NumTxs            uint64    `json:"numTxs"`
+	GasUsed           uint64    `json:"gasUsed"`
+	GasLimit          uint64    `json:"gasLimit"`
+	Rewards           string    `json:"Rewards"`
+	ProposerAddress   string    `json:"proposerAddress"`
+	TxHash            string    `json:"dataHash"`     // transactions
+	ReceiptHash       string    `json:"receiptsRoot"` // receipt root
+	Bloom             string    `json:"logsBloom"`
+	ValidatorsHash    string    `json:"validatorHash"`     // current block validators hash
+	NextValidatorHash string    `json:"nextValidatorHash"` // next block validators hash
+	ConsensusHash     string    `json:"consensusHash"`     // current consensus hash
+	AppHash           string    `json:"appHash"`           // state of transactions
+	EvidenceHash      string    `json:"evidenceHash"`      // hash of evidence
 }
 
 type NodeInfo struct {

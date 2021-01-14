@@ -7,19 +7,17 @@ import (
 	"fmt"
 	"math/big"
 	"reflect"
-	"strconv"
 	"strings"
 
 	"github.com/kardiachain/go-kardia/lib/abi"
 	"github.com/kardiachain/go-kardia/lib/common"
-	"go.uber.org/zap"
 )
 
 type IContract interface {
 	StakingContact(ctx context.Context) *Contract
 	ValidatorContact(ctx context.Context) *Contract
 
-	DecodeLog(ctx context.Context, smcABI *abi.ABI, log *Log) error
+	//DecodeLog(ctx context.Context, smcABI *abi.ABI, log *Log) error
 }
 
 // DecodeInputData returns decoded transaction input data if it match any function in staking and validator contract.
@@ -79,37 +77,6 @@ func (n *node) DecodeInputData(to string, input string) (*FunctionCall, error) {
 	}, nil
 }
 
-func (n *node) DecodeLog(ctx context.Context, smcABI *abi.ABI, log *Log) error {
-	event, err := smcABI.EventByID(common.HexToHash(log.Topics[0]))
-	if err != nil {
-		return err
-	}
-	n.lgr.Debug("Event ", zap.Any("ev", event))
-	argumentsValue := make(map[string]interface{})
-	err = unpackLogIntoMap(smcABI, argumentsValue, event.RawName, log)
-	if err != nil {
-		return err
-	}
-	// convert address, bytes and string arguments into their hex representations
-	//for i, arg := range argumentsValue {
-	//	argumentsValue[i] = parseBytesArrayIntoString(arg)
-	//}
-	// append unpacked data
-	log.Arguments = argumentsValue
-	log.MethodName = event.RawName
-	log.Name = event.RawName + "("
-	order := int64(1)
-	for _, arg := range event.Inputs {
-		if arg.Indexed {
-			log.Name += "index_topic_" + strconv.FormatInt(order, 10) + " "
-			order++
-		}
-		log.Name += arg.Type.String() + " " + arg.Name + ", "
-	}
-	log.Name = strings.TrimRight(log.Name, ", ") + ")"
-	return nil
-}
-
 // parseBytesArrayIntoString is a utility function. It converts address, bytes and string arguments into their hex representation.
 func parseBytesArrayIntoString(v interface{}) interface{} {
 	if reflect.TypeOf(v).Kind() == reflect.Array {
@@ -129,32 +96,6 @@ func parseBytesArrayIntoString(v interface{}) interface{} {
 		}
 	}
 	return v
-}
-
-// UnpackLogIntoMap unpacks a retrieved log into the provided map.
-func unpackLogIntoMap(a *abi.ABI, out map[string]interface{}, eventName string, log *Log) error {
-	data, err := hex.DecodeString(log.Data)
-	if err != nil {
-		return err
-	}
-	// unpacking unindexed arguments
-	if len(data) > 0 {
-		if err := a.UnpackIntoMap(out, eventName, data); err != nil {
-			return err
-		}
-	}
-	// unpacking indexed arguments
-	var indexed abi.Arguments
-	for _, arg := range a.Events[eventName].Inputs {
-		if arg.Indexed {
-			indexed = append(indexed, arg)
-		}
-	}
-	topics := make([]common.Hash, len(log.Topics)-1)
-	for i, topic := range log.Topics[1:] { // exclude the eventID (log.Topic[0])
-		topics[i] = common.HexToHash(topic)
-	}
-	return abi.ParseTopicsIntoMap(out, indexed, topics)
 }
 
 // getInputArguments get input arguments of a contract call
