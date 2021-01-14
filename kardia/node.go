@@ -29,8 +29,10 @@ import (
 	"github.com/kardiachain/go-kardia/lib/abi"
 	"github.com/kardiachain/go-kardia/lib/common"
 	"github.com/kardiachain/go-kardia/rpc"
+)
 
-	"github.com/kardiachain/go-kaiclient/contracts"
+const (
+	StakingContractAddr = "0x0000000000000000000000000000000000001337"
 )
 
 type Contract struct {
@@ -84,8 +86,7 @@ func (n *node) setupSMC() error {
 	}
 	stakingUtil := &Contract{
 		Abi:             &stakingSmcABI,
-		ContractAddress: common.HexToAddress(contracts.StakingContractAddr),
-		Bytecode:        contracts.StakingContractByteCode,
+		ContractAddress: common.HexToAddress(StakingContractAddr),
 	}
 	n.stakingSMC = stakingUtil
 	validatorABI, err := os.Open(path.Join(filePath, "../kardia/abi/validator.json"))
@@ -97,8 +98,7 @@ func (n *node) setupSMC() error {
 		return err
 	}
 	validatorUtil := &Contract{
-		Abi:      &validatorSmcAbi,
-		Bytecode: contracts.ValidatorContractByteCode,
+		Abi: &validatorSmcAbi,
 	}
 	n.validatorSMC = validatorUtil
 	paramsSmcAddr, err := getParamsSMCAddress(stakingUtil, n.client)
@@ -116,7 +116,6 @@ func (n *node) setupSMC() error {
 	paramsUtil := &Contract{
 		Abi:             &paramsSmcAbi,
 		ContractAddress: paramsSmcAddr,
-		Bytecode:        contracts.ParamsContractsByteCode,
 	}
 	n.paramsSMC = paramsUtil
 
