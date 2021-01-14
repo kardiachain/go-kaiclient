@@ -1,0 +1,586 @@
+[
+  {
+    "inputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "mintParams",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "inflationRateChange",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "goalBonded",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "blocksPerYear",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "inflationMax",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "inflationMin",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "stakingParams",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "baseProposerReward",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "bonusProposerReward",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "maxProposers",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "validatorParams",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "downtimeJailDuration",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "slashFractionDowntime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "unbondingTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "slashFractionDoubleSign",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "signedBlockWindow",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minSignedPerWindow",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minStake",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minValidatorStake",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minAmountChangeName",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minSelfDelegation",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_baseProposerReward",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_bonusProposerReward",
+        "type": "uint256"
+      }
+    ],
+    "name": "updateBaseReward",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_maxProposers",
+        "type": "uint256"
+      }
+    ],
+    "name": "updateMaxValidator",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_downtimeJailDuration",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_slashFractionDowntime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_unbondingTime",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_slashFractionDoubleSign",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_signedBlockWindow",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_minSignedPerWindow",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_minStake",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_minValidatorStake",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_minAmountChangeName",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_minSelfDelegation",
+        "type": "uint256"
+      }
+    ],
+    "name": "updateValidatorParams",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_inflationRateChange",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_goalBonded",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_blocksPerYear",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_inflationMax",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_inflationMin",
+        "type": "uint256"
+      }
+    ],
+    "name": "updateMintParams",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getBaseProposerReward",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getBonusProposerReward",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getMaxProposers",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "maxProposers",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getInflationRateChange",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getGoalBonded",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getBlocksPerYear",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getInflationMax",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getInflationMin",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getDowntimeJailDuration",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getSlashFractionDowntime",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getUnbondingTime",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getSlashFractionDoubleSign",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getSignedBlockWindow",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getMinSignedPerWindow",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getMinStake",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getMinValidatorStake",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getMinAmountChangeName",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getMinSelfDelegation",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

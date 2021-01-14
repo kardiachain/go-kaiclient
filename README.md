@@ -2,18 +2,18 @@
 ## Initializing
 ```go
 func SetupKAIClient() (*Client, context.Context, error) {
-	ctx, _ := context.WithCancel(context.Background())
-	cfg := zapdriver.NewProductionConfig()
-	logger, err := cfg.Build()
-	if err != nil {
-		return nil, nil, fmt.Errorf("Failed to create logger: %v", err)
-	}
-	// defer logger.Sync()
-	client, err := NewKaiClient("http://10.10.0.251:8551", logger)
-	if err != nil {
-		return nil, nil, fmt.Errorf("Failed to create new KaiClient: %v", err)
-	}
-	return client, ctx, nil
+ctx, _ := context.WithCancel(context.Background())
+cfg := zapdriver.NewProductionConfig()
+logger, err := cfg.Build()
+if err != nil {
+return nil, nil, fmt.Errorf("Failed to create logger: %v", err)
+}
+// defer logger.Sync()
+client, err := NewKaiClient("http://10.10.0.251:8551", logger)
+if err != nil {
+return nil, nil, fmt.Errorf("Failed to create new KaiClient: %v", err)
+}
+return client, ctx, nil
 }
 ```
 ## Endpoints

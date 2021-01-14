@@ -1,5 +1,9 @@
 # KaiClient
+
 ## Initializing
+
+-----
+
 ```go
 func SetupKAIClient() (*Client, context.Context, error) {
 	ctx, _ := context.WithCancel(context.Background())
@@ -16,30 +20,41 @@ func SetupKAIClient() (*Client, context.Context, error) {
 	return client, ctx, nil
 }
 ```
-## Endpoints
+
+## API
+
+Current support API
+
+### Blocks
+
+------
+
 **LatestBlockNumber**
+
 ```go
 LatestBlockNumber(ctx context.Context) (uint64, error)
 ```
+
 **BlockByHash**
+
 ```go
-BlockByHash(ctx context.Context, hash common.Hash) (*types.Block, error)
+BlockByHash(ctx context.Context, hash common.Hash) (*Block, error)
 ```
 **BlockByNumber**
 ```go
-BlockByNumber(ctx context.Context, number uint64) (*types.Block, error)
+BlockByNumber(ctx context.Context, number uint64) (*Block, error)
 ```
 **BlockHeaderByNumber**
 ```go
-BlockHeaderByNumber(ctx context.Context, number uint64) (*types.Header, error)
+BlockHeaderByNumber(ctx context.Context, number uint64) (*Header, error)
 ```
 **BlockHeaderByHash**
 ```go
-BlockHeaderByHash(ctx context.Context, hash common.Hash) (*types.Header, error)
+BlockHeaderByHash(ctx context.Context, hash common.Hash) (*Header, error)
 ```
 **GetTransaction**
 ```go
-GetTransaction(ctx context.Context, hash common.Hash) (tx *types.Transaction, isPending bool, err error)
+GetTransaction(ctx context.Context, hash common.Hash) (tx *Transaction, isPending bool, err error)
 ```
 **GetTransactionReceipt**
 ```go
@@ -55,15 +70,15 @@ NonceAt(ctx context.Context, account common.Address) (uint64, error)
 ```
 **SendRawTransaction**
 ```go
-SendRawTransaction(ctx context.Context, tx *types.Transaction) error
+SendRawTransaction(ctx context.Context, tx *Transaction) error
 ```
 **Peers**
 ```go
-Peers(ctx context.Context) ([]*types.PeerInfo, error)
+Peers(ctx context.Context) ([]*PeerInfo, error)
 ```
 **NodesInfo**
 ```go
-NodesInfo(ctx context.Context) ([]*types.NodeInfo, error)
+NodesInfo(ctx context.Context) ([]*NodeInfo, error)
 ```
 **Datadir**
 ```go
@@ -71,10 +86,10 @@ Datadir(ctx context.Context) (string, error)
 ```
 **Validator**
 ```go
-Validator(ctx context.Context, rpcURL string) (*types.Validator, error)
+Validator(ctx context.Context, rpcURL string) (*Validator, error)
 ```
 **Validators**
 ```go
-Validators(ctx context.Context) ([]*types.Validator, error)
+Validators(ctx context.Context) ([]*Validator, error)
 ```
 ## Benchmark result
