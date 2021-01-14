@@ -26,6 +26,34 @@ import (
 	"go.uber.org/zap"
 )
 
+type IStaking interface {
+	TotalStakedAmount(ctx context.Context) (*big.Int, error)
+}
+
+func (n *node) TotalStakedAmount(ctx context.Context) (*big.Int, error) {
+	payload, err := n.stakingSMC.Abi.Pack("totalBonded")
+	if err != nil {
+		n.lgr.Error("Error packing UDB entry payload: ", zap.Error(err))
+		return nil, err
+	}
+	res, err := n.KardiaCall(ctx, constructCallArgs(n.stakingSMC.ContractAddress.Hex(), payload))
+	if err != nil {
+		n.lgr.Error("Get totalBonded KardiaCall error: ", zap.Error(err))
+		return nil, err
+	}
+
+	var result struct {
+		TotalBonded *big.Int
+	}
+	// unpack result
+	err = n.stakingSMC.Abi.UnpackIntoInterface(&result, "totalBonded", res)
+	if err != nil {
+		n.lgr.Error("Error unpacking UDB entry: ", zap.Error(err))
+		return nil, err
+	}
+	return result.TotalBonded, nil
+}
+
 //
 //func (ec *Client) GetValidatorsByDelegator(ctx context.Context, delAddr common.Address) ([]*types.ValidatorsByDelegator, error) {
 //	// construct input data

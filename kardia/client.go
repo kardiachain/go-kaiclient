@@ -39,6 +39,7 @@ type Node interface {
 	DecodeInputData(to string, input string) (*FunctionCall, error)
 
 	IContract
+	IStaking
 
 	GetCirculatingSupply(ctx context.Context) (*big.Int, error)
 
