@@ -3,7 +3,6 @@ package kardia
 
 import (
 	"crypto/ecdsa"
-	"testing"
 
 	"github.com/kardiachain/go-kardia/lib/crypto"
 	"go.uber.org/zap"
@@ -37,12 +36,4 @@ func SetupTestAccount() (*ecdsa.PublicKey, *ecdsa.PrivateKey, error) {
 	}
 
 	return publicKeyECDSA, privateKey, nil
-}
-
-func TestNode_Ping(t *testing.T) {
-
-}
-
-func TestNode_GetBalance(t *testing.T) {
-
 }
