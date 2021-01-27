@@ -2,8 +2,10 @@
 package kardia
 
 import (
+	"crypto/ecdsa"
 	"testing"
 
+	"github.com/kardiachain/go-kardia/lib/crypto"
 	"go.uber.org/zap"
 )
 
@@ -20,6 +22,21 @@ func SetupNodeClient() (Node, error) {
 	}
 
 	return node, nil
+}
+
+func SetupTestAccount() (*ecdsa.PublicKey, *ecdsa.PrivateKey, error) {
+	privateKey, err := crypto.HexToECDSA("63e16b5334e76d63ee94f35bd2a81c721ebbbb27e81620be6fc1c448c767eed9")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		return nil, nil, err
+	}
+
+	return publicKeyECDSA, privateKey, nil
 }
 
 func TestNode_Ping(t *testing.T) {

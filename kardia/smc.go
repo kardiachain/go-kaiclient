@@ -18,6 +18,7 @@ type IContract interface {
 	ValidatorContact(ctx context.Context) *Contract
 
 	//DecodeLog(ctx context.Context, smcABI *abi.ABI, log *Log) error
+	//EstimateGas(ctx context.Context) (uint64, error)
 }
 
 // DecodeInputData returns decoded transaction input data if it match any function in staking and validator contract.
@@ -120,3 +121,14 @@ func (n *node) StakingContact(ctx context.Context) *Contract {
 func (n *node) ValidatorContact(ctx context.Context) *Contract {
 	return n.validatorSMC
 }
+
+//func (n *node) EstimateGas(ctx context.Context) (uint64, error) {
+//	var result uint64
+//	args := SMCCallArgs{
+//		From:     "0x",
+//		Gas:      3000000,
+//		GasPrice: big.NewInt(1),
+//	}
+//	err := n.client.CallContext(ctx, &result, "kai_estimateGas", args)
+//	return result, err
+//}

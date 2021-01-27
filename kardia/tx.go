@@ -4,9 +4,19 @@ package kardia
 import (
 	"context"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/kardiachain/go-kardia"
 	"github.com/kardiachain/go-kardia/lib/common"
+	"github.com/kardiachain/go-kardia/lib/rlp"
+	"github.com/kardiachain/go-kardia/types"
 )
+
+type ITx interface {
+	GetTransaction(ctx context.Context, hash string) (*Transaction, error)
+	GetTransactionReceipt(ctx context.Context, txHash string) (*Receipt, error)
+	SendTransaction(ctx context.Context, tx *types.Transaction) error
+	SendRawTransaction(ctx context.Context, tx *types.Transaction) error
+}
 
 // GetTransaction returns the transaction with the given hash.
 func (n *node) GetTransaction(ctx context.Context, hash string) (*Transaction, error) {
@@ -34,9 +44,23 @@ func (n *node) GetTransactionReceipt(ctx context.Context, txHash string) (*Recei
 }
 
 // SendRawTransaction injects a signed transaction into the pending pool for execution.
-//
 // If the transaction was a contract creation use the GetTransactionReceipt method to get the
 // contract address after the transaction has been mined.
-func (n *node) SendRawTransaction(ctx context.Context, tx string) error {
-	return n.client.CallContext(ctx, nil, "tx_sendRawTransaction", tx)
+func (n *node) SendTransaction(ctx context.Context, tx *types.Transaction) error {
+	data, err := rlp.EncodeToBytes(tx)
+	if err != nil {
+		return err
+	}
+	return n.client.CallContext(ctx, nil, "tx_sendRawTransaction", hexutil.Encode(data))
+}
+
+// SendRawTransaction injects a signed transaction into the pending pool for execution.
+// If the transaction was a contract creation use the GetTransactionReceipt method to get the
+// contract address after the transaction has been mined.
+func (n *node) SendRawTransaction(ctx context.Context, tx *types.Transaction) error {
+	data, err := rlp.EncodeToBytes(tx)
+	if err != nil {
+		return err
+	}
+	return n.client.CallContext(ctx, nil, "tx_sendRawTransaction", hexutil.Encode(data))
 }

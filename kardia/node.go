@@ -20,10 +20,13 @@ package kardia
 
 import (
 	"context"
+	"math/big"
 	"os"
 	"path"
 	"runtime"
 
+	"github.com/kardiachain/go-kardia"
+	"github.com/kardiachain/go-kardia/lib/abi/bind"
 	"go.uber.org/zap"
 
 	"github.com/kardiachain/go-kardia/lib/abi"
@@ -35,10 +38,31 @@ const (
 	StakingContractAddr = "0x0000000000000000000000000000000000001337"
 )
 
-type Contract struct {
-	Abi             *abi.ABI
-	ContractAddress common.Address
-	Bytecode        string
+type Node interface {
+	IsAlive() bool
+	Info(ctx context.Context) (*NodeInfo, error)
+
+	IAddress
+
+	LatestBlockNumber(ctx context.Context) (uint64, error)
+	BlockByHash(ctx context.Context, hash string) (*Block, error)
+	BlockByHeight(ctx context.Context, height uint64) (*Block, error)
+	BlockHeaderByHash(ctx context.Context, hash string) (*Header, error)
+	BlockHeaderByNumber(ctx context.Context, number uint64) (*Header, error)
+
+	DecodeInputData(to string, input string) (*FunctionCall, error)
+
+	IContract
+	IStaking
+	ITx
+
+	GetCirculatingSupply(ctx context.Context) (*big.Int, error)
+
+	KardiaCall(ctx context.Context, args SMCCallArgs) ([]byte, error)
+	IValidator
+	IDelegator
+	bind.ContractCaller
+	bind.ContractTransactor
 }
 
 type node struct {
@@ -52,6 +76,30 @@ type node struct {
 	stakingSMC   *Contract
 	validatorSMC *Contract
 	paramsSMC    *Contract
+}
+
+func (n *node) PendingCodeAt(ctx context.Context, account common.Address) ([]byte, error) {
+	panic("implement me")
+}
+
+func (n *node) PendingNonceAt(ctx context.Context, account common.Address) (uint64, error) {
+	panic("implement me")
+}
+
+func (n *node) SuggestGasPrice(ctx context.Context) (uint64, error) {
+	panic("implement me")
+}
+
+func (n *node) EstimateGas(ctx context.Context, call kardia.CallMsg) (gas uint64, err error) {
+	panic("implement me")
+}
+
+func (n *node) CodeAt(ctx context.Context, contract common.Address, blockNumber uint64) ([]byte, error) {
+	panic("implement me")
+}
+
+func (n *node) CallContract(ctx context.Context, call kardia.CallMsg, blockNumber uint64) ([]byte, error) {
+	panic("implement me")
 }
 
 func NewNode(url string, lgr *zap.Logger) (Node, error) {

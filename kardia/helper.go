@@ -3,10 +3,15 @@ package kardia
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"errors"
 	"math/big"
 
+	"github.com/kardiachain/go-kardia/lib/abi/bind"
 	"github.com/kardiachain/go-kardia/lib/common"
+	"github.com/kardiachain/go-kardia/lib/crypto"
 	"github.com/kardiachain/go-kardia/rpc"
+	"github.com/kardiachain/go-kardia/types"
 )
 
 func getParamsSMCAddress(stakingSMC *Contract, client *rpc.Client) (common.Address, error) {
@@ -43,5 +48,24 @@ func constructCallArgs(address string, payload []byte) SMCCallArgs {
 		GasPrice: big.NewInt(0),
 		Value:    big.NewInt(0),
 		Data:     common.Bytes(payload).String(),
+	}
+}
+
+// NewKeyedTransactor is a utility method to easily create a transaction signer
+// from a single private key.
+func NewKeyedTransactor(key *ecdsa.PrivateKey) *bind.TransactOpts {
+	keyAddr := crypto.PubkeyToAddress(key.PublicKey)
+	return &bind.TransactOpts{
+		From: keyAddr,
+		Signer: func(signer types.Signer, address common.Address, tx *types.Transaction) (*types.Transaction, error) {
+			if address != keyAddr {
+				return nil, errors.New("not authorized to sign this account")
+			}
+			signature, err := crypto.Sign(signer.Hash(tx).Bytes(), key)
+			if err != nil {
+				return nil, err
+			}
+			return tx.WithSignature(signer, signature)
+		},
 	}
 }
