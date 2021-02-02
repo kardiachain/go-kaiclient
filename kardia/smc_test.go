@@ -519,32 +519,38 @@ func TestSMC_WheelSpinWithWait(t *testing.T) {
 			fmt.Println("Check with block", currentHeight)
 			networkBlock, err := node.LatestBlockNumber(ctx)
 			assert.Nil(t, err)
-			if networkBlock > currentHeight {
-				block, err := node.BlockByHeight(ctx, currentHeight)
+			if networkBlock <= currentHeight {
+				continue
+			}
+			block, err := node.BlockByHeight(ctx, currentHeight)
+			assert.Nil(t, err)
+			for _, tx := range block.Txs {
+				if tx.Hash != hash {
+					continue
+				}
+				receipt, err := node.GetTransactionReceipt(ctx, hash)
 				assert.Nil(t, err)
-				for _, tx := range block.Txs {
-					if tx.Hash == hash {
-						receipt, err := node.GetTransactionReceipt(ctx, hash)
-						assert.Nil(t, err)
-						fmt.Println("TxData", tx)
-						fmt.Println("TxReceipt", receipt)
-						for _, l := range receipt.Logs {
-							fmt.Println("Log", l)
-							events, err := filter.Events(l)
-							assert.Nil(t, err)
-							for _, ev := range events {
-								fmt.Printf("ev: %+v \n", ev)
-								amount := ev.Inputs["_amount"]
-								fmt.Println("Amount", amount)
-								to := ev.Inputs["_to"]
-								fmt.Println("To", to)
-							}
-						}
-						return
+				fmt.Println("TxData", tx)
+				fmt.Println("TxReceipt", receipt)
+				if len(receipt.Logs) == 0 {
+					fmt.Println("Look like no reward ")
+				}
+				for _, l := range receipt.Logs {
+					fmt.Println("Log", l)
+					events, err := filter.Events(l)
+					assert.Nil(t, err)
+					for _, ev := range events {
+						fmt.Printf("ev: %+v \n", ev)
+						amount := ev.Inputs["_amount"].(*big.Int)
+						fmt.Println("Amount", amount)
+						addr, _ := ev.Inputs["_to"].(common.Address)
+						fmt.Println("To", addr.String())
 					}
 				}
-				currentHeight++
+
+				return
 			}
+			currentHeight++
 		}
 	}
 
