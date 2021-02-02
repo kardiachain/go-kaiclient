@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/kardiachain/go-kardia/lib/abi"
 	"github.com/kardiachain/go-kardia/lib/common"
@@ -23,8 +24,40 @@ var (
 		"type": "constructor"
 	},
 	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "_to",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "_amount",
+				"type": "uint256"
+			}
+		],
+		"name": "transferReward",
+		"type": "event"
+	},
+	{
 		"inputs": [],
 		"name": "TIME",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "day",
 		"outputs": [
 			{
 				"internalType": "uint256",
@@ -75,14 +108,8 @@ var (
 		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"name": "numberOfSpin",
+		"inputs": [],
+		"name": "maxSpinDaily",
 		"outputs": [
 			{
 				"internalType": "uint256",
@@ -94,19 +121,20 @@ var (
 		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"name": "reward",
+		"inputs": [],
+		"name": "pause",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "paused",
 		"outputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "bool",
 				"name": "",
-				"type": "uint256"
+				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
@@ -141,17 +169,12 @@ var (
 	{
 		"inputs": [
 			{
-				"internalType": "address",
-				"name": "_addr",
-				"type": "address"
-			},
-			{
 				"internalType": "uint256",
-				"name": "_number",
+				"name": "_maxSpinDaily",
 				"type": "uint256"
 			}
 		],
-		"name": "setNumberOfSpin",
+		"name": "setMaxSpinPerDay",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -191,7 +214,7 @@ var (
 	},
 	{
 		"inputs": [],
-		"name": "withdrawReward",
+		"name": "unpause",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -201,23 +224,8 @@ var (
 		"type": "receive"
 	}
 ]`
-	WheelSMCAddr = "0x523AC3553B4814D0a6629419ACc7adAe60aB929E"
+	WheelSMCAddr = "0xf51456d7d9F9663818Bf669c45D75B23ed34c9eC"
 )
-
-func GetSignedTx() {
-
-}
-
-func TestEstimateGas(t *testing.T) {
-	//ctx := context.Background()
-	//node, err := SetupNodeClient()
-	//assert.Nil(t, err)
-
-	//gas, err := node.EstimateGas(ctx)
-	//assert.Nil(t, err)
-	//
-	//fmt.Println("Done", gas)
-}
 
 func TestSMC_AddSpin(t *testing.T) {
 	node, err := SetupNodeClient()
@@ -464,4 +472,114 @@ func TestSMC_WheelReward(t *testing.T) {
 	assert.Nil(t, err)
 
 	fmt.Println("Reward", result)
+}
+
+func TestSMC_WheelSpinWithWait(t *testing.T) {
+	ctx := context.Background()
+	node, err := SetupNodeClient()
+	assert.Nil(t, err)
+	r := strings.NewReader(wheelABI)
+	abiData, err := abi.JSON(r)
+	assert.Nil(t, err)
+
+	// Get current height
+	currentHeight, err := node.LatestBlockNumber(ctx)
+	assert.Nil(t, err)
+
+	smc := NewContract(node, &abiData, common.HexToAddress(WheelSMCAddr))
+
+	pubKey, privateKey, err := SetupTestAccount()
+	assert.Nil(t, err)
+	fromAddress := crypto.PubkeyToAddress(*pubKey)
+	// Now we can read the nonce that we should use for the account's transaction.
+	nonce, err := node.NonceAt(context.Background(), fromAddress.Hex())
+	assert.Nil(t, err)
+	gasLimit := uint64(3000000)
+	gasPrice := big.NewInt(1)
+	auth := NewKeyedTransactor(privateKey)
+	auth.Nonce = nonce
+	auth.Value = big.NewInt(0) // in wei
+	auth.GasLimit = gasLimit   // in units
+	auth.GasPrice = gasPrice
+
+	txData, err := smc.Transact(auth, "spin")
+	assert.Nil(t, err)
+	hash := txData.Hash().String()
+	fmt.Println("TxHash", txData.Hash().String())
+	ticker := time.NewTicker(2 * time.Second)
+	eventCodes := []string{"transferReward"}
+	filter, err := NewFilter(eventCodes, &abiData)
+	assert.Nil(t, err)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			fmt.Println("Check with block", currentHeight)
+			networkBlock, err := node.LatestBlockNumber(ctx)
+			assert.Nil(t, err)
+			if networkBlock > currentHeight {
+				block, err := node.BlockByHeight(ctx, currentHeight)
+				assert.Nil(t, err)
+				for _, tx := range block.Txs {
+					if tx.Hash == hash {
+						receipt, err := node.GetTransactionReceipt(ctx, hash)
+						assert.Nil(t, err)
+						fmt.Println("TxData", tx)
+						fmt.Println("TxReceipt", receipt)
+						for _, l := range receipt.Logs {
+							fmt.Println("Log", l)
+							events, err := filter.Events(l)
+							assert.Nil(t, err)
+							for _, ev := range events {
+								fmt.Printf("ev: %+v \n", ev)
+								amount := ev.Inputs["_amount"]
+								fmt.Println("Amount", amount)
+								to := ev.Inputs["_to"]
+								fmt.Println("To", to)
+							}
+						}
+						return
+					}
+				}
+				currentHeight++
+			}
+		}
+	}
+
+	//fullTx, err := node.GetTransaction(ctx, tx.Hash().String())
+}
+
+func TestDecode(t *testing.T) {
+	ctx := context.Background()
+	node, err := SetupNodeClient()
+	assert.Nil(t, err)
+	r := strings.NewReader(wheelABI)
+	abiData, err := abi.JSON(r)
+	assert.Nil(t, err)
+	eventCodes := []string{"transferReward"}
+	filter, err := NewFilter(eventCodes, &abiData)
+	hash := "0x0eae6a46260abbb4c2ccd311f4bb35defde9b647cc4d482390325b59d780f3d0"
+	tx, err := node.GetTransaction(ctx, hash)
+	assert.Nil(t, err)
+
+	receipt, err := node.GetTransactionReceipt(ctx, hash)
+	assert.Nil(t, err)
+	fmt.Println("TxData", tx)
+	fmt.Printf("TxReceipt: %+v \n", receipt)
+	for _, l := range receipt.Logs {
+		fmt.Println("Log", l)
+		events, err := filter.Events(l)
+		assert.Nil(t, err)
+		for _, ev := range events {
+			fmt.Printf("ev: %+v \n", ev)
+			amount := ev.Inputs["_amount"]
+			fmt.Println("Amount", amount)
+			addr, _ := ev.Inputs["_to"].(common.Address)
+			fmt.Println("To", addr.String())
+		}
+
+	}
+
 }

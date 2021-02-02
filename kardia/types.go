@@ -192,3 +192,12 @@ type SlashEvents struct {
 	Fraction string `json:"fraction" bson:"fraction"`
 	Height   string `json:"height" bson:"height"`
 }
+
+type Event struct {
+	Name string
+	// RawName is the raw event name parsed from ABI.
+	RawName    string
+	Inputs     map[string]interface{}
+	TxHash     string
+	SMCAddress string
+}

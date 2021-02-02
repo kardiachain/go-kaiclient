@@ -78,6 +78,7 @@ type node struct {
 	paramsSMC    *Contract
 }
 
+//ContractTransactor
 func (n *node) PendingCodeAt(ctx context.Context, account common.Address) ([]byte, error) {
 	panic("implement me")
 }
@@ -94,6 +95,7 @@ func (n *node) EstimateGas(ctx context.Context, call kardia.CallMsg) (gas uint64
 	panic("implement me")
 }
 
+//ContractCaller
 func (n *node) CodeAt(ctx context.Context, contract common.Address, blockNumber uint64) ([]byte, error) {
 	panic("implement me")
 }
