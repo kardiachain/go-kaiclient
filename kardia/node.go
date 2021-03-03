@@ -56,6 +56,8 @@ type Node interface {
 	IStaking
 	ITx
 
+	ISubscription
+
 	GetCirculatingSupply(ctx context.Context) (*big.Int, error)
 
 	KardiaCall(ctx context.Context, args SMCCallArgs) ([]byte, error)
