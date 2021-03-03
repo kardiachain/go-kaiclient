@@ -848,12 +848,12 @@
     "outputs": [
       {
         "internalType": "uint256[]",
-        "name": "",
+        "name": "amounts",
         "type": "uint256[]"
       },
       {
         "internalType": "uint256[]",
-        "name": "",
+        "name": "completionTimes",
         "type": "uint256[]"
       }
     ],
