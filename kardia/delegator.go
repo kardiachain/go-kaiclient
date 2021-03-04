@@ -20,7 +20,7 @@ func (n *node) UnbondedRecords(ctx context.Context, validatorSMCAddress common.A
 		n.lgr.Error("Error packing UDB entry payload: ", zap.Error(err))
 		return nil, nil, err
 	}
-	res, err := n.KardiaCall(ctx, constructCallArgs(validatorSMCAddress.Hex(), payload))
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(validatorSMCAddress.Hex(), payload))
 	if err != nil {
 		n.lgr.Error("GetUDBEntry KardiaCall error: ", zap.Error(err))
 		return nil, nil, err

@@ -58,7 +58,7 @@ func (n *node) Validator(ctx context.Context, validatorSMCAddress string) (*Vali
 		lgr.Error("Error packing validator info payload: ", zap.Error(err))
 		return nil, err
 	}
-	res, err := n.KardiaCall(ctx, constructCallArgs(validatorSMCAddress, payload))
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(validatorSMCAddress, payload))
 	if err != nil {
 		lgr.Error("GetValidatorInfo KardiaCall error: ", zap.Error(err))
 		return nil, err
@@ -102,7 +102,7 @@ func (n *node) getSigningInfo(ctx context.Context, validatorSMCAddress string) (
 		lgr.Error("Error packing get signingInfo payload: ", zap.Error(err))
 		return nil, err
 	}
-	res, err := n.KardiaCall(ctx, constructCallArgs(validatorSMCAddress, payload))
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(validatorSMCAddress, payload))
 	if err != nil {
 		lgr.Error("GetSigningInfo KardiaCall error: ", zap.Error(err))
 		return nil, err
@@ -124,7 +124,7 @@ func (n *node) getDelegatorStakedAmount(ctx context.Context, valSmcAddr, delegat
 		n.lgr.Error("Error packing delegator staked amount payload: ", zap.Error(err))
 		return nil, err
 	}
-	res, err := n.KardiaCall(ctx, constructCallArgs(valSmcAddr, payload))
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(valSmcAddr, payload))
 	if err != nil {
 		n.lgr.Error("getDelegatorStakedAmount KardiaCall error: ", zap.Error(err))
 		return nil, err
@@ -152,7 +152,7 @@ func (n *node) getValidatorCommission(ctx context.Context, valSmcAddr string) (*
 	if err != nil {
 		return nil, err
 	}
-	res, err := n.KardiaCall(ctx, constructCallArgs(valSmcAddr, payload))
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(valSmcAddr, payload))
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +171,7 @@ func (n *node) getDelegators(ctx context.Context, validatorSMCAddress string) ([
 	if err != nil {
 		return nil, err
 	}
-	res, err := n.KardiaCall(ctx, constructCallArgs(validatorSMCAddress, payload))
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(validatorSMCAddress, payload))
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +212,7 @@ func (n *node) getDelegationRewards(ctx context.Context, validatorSMCAddr, deleg
 		n.lgr.Error("Error packing delegation rewards payload: ", zap.Error(err))
 		return nil, err
 	}
-	res, err := n.KardiaCall(ctx, constructCallArgs(validatorSMCAddr, payload))
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(validatorSMCAddr, payload))
 	if err != nil {
 		n.lgr.Error("GetDelegationRewards KardiaCall error: ", zap.Error(err))
 		return nil, err
@@ -241,7 +241,7 @@ func (n *node) GetSlashEvents(ctx context.Context, validatorSMCAddress string) (
 		if err != nil {
 			return nil, err
 		}
-		res, err := n.KardiaCall(ctx, constructCallArgs(validatorSMCAddress, payload))
+		res, err := n.KardiaCall(ctx, ConstructCallArgs(validatorSMCAddress, payload))
 		if err != nil {
 			return nil, err
 		}
@@ -272,7 +272,7 @@ func (n *node) getSlashEventsSize(ctx context.Context, validatorSMCAddress strin
 		n.lgr.Error("Error packing get slash events length payload: ", zap.Error(err))
 		return 0, err
 	}
-	res, err := n.KardiaCall(ctx, constructCallArgs(validatorSMCAddress, payload))
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(validatorSMCAddress, payload))
 	if err != nil {
 		n.lgr.Warn("GetSlashEventsLength KardiaCall error: ", zap.Error(err))
 		return 0, err
@@ -298,7 +298,7 @@ func (n *node) getValidatorSets(ctx context.Context) ([]common.Address, error) {
 		n.lgr.Error("Error packing proposers list payload: ", zap.Error(err))
 		return nil, err
 	}
-	res, err := n.KardiaCall(ctx, constructCallArgs(n.stakingSMC.ContractAddress.Hex(), payload))
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(n.stakingSMC.ContractAddress.Hex(), payload))
 	if err != nil {
 		n.lgr.Error("GetValidatorSets KardiaCall error: ", zap.Error(err))
 		return nil, err

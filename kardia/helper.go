@@ -24,7 +24,7 @@ func getParamsSMCAddress(stakingSMC *Contract, client *rpc.Client) (common.Addre
 		res common.Bytes
 		ctx = context.Background()
 	)
-	err = client.CallContext(ctx, &res, "kai_kardiaCall", constructCallArgs(stakingSMC.ContractAddress.Hex(), payload), "latest")
+	err = client.CallContext(ctx, &res, "kai_kardiaCall", ConstructCallArgs(stakingSMC.ContractAddress.Hex(), payload), "latest")
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -40,7 +40,7 @@ func getParamsSMCAddress(stakingSMC *Contract, client *rpc.Client) (common.Addre
 	return result.ParamsSmcAddr, nil
 }
 
-func constructCallArgs(address string, payload []byte) SMCCallArgs {
+func ConstructCallArgs(address string, payload []byte) SMCCallArgs {
 	return SMCCallArgs{
 		From:     address,
 		To:       &address,

@@ -360,7 +360,7 @@ func TotalSpin(ctx context.Context, node Node, smc *Contract, addr common.Addres
 	if err != nil {
 		return 0, err
 	}
-	res, err := node.KardiaCall(ctx, constructCallArgs(WheelSMCAddr, payload))
+	res, err := node.KardiaCall(ctx, ConstructCallArgs(WheelSMCAddr, payload))
 	if err != nil {
 		return 0, err
 	}
@@ -430,7 +430,7 @@ func TotalReward(ctx context.Context, node Node, smc *Contract, fromAddr common.
 	if err != nil {
 		return 0, err
 	}
-	res, err := node.KardiaCall(ctx, constructCallArgs(WheelSMCAddr, payload))
+	res, err := node.KardiaCall(ctx, ConstructCallArgs(WheelSMCAddr, payload))
 	if err != nil {
 		return 0, err
 	}
@@ -461,7 +461,7 @@ func TestSMC_WheelReward(t *testing.T) {
 
 	payload, err := smc.Abi.Pack("reward", common.HexToAddress("0x4f36A53DC32272b97Ae5FF511387E2741D727bdb"))
 	assert.Nil(t, err)
-	res, err := node.KardiaCall(ctx, constructCallArgs(WheelSMCAddr, payload))
+	res, err := node.KardiaCall(ctx, ConstructCallArgs(WheelSMCAddr, payload))
 	assert.Nil(t, err)
 	type reward struct {
 		Reward *big.Int

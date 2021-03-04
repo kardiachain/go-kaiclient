@@ -36,7 +36,7 @@ func (n *node) TotalStakedAmount(ctx context.Context) (*big.Int, error) {
 		n.lgr.Error("Error packing UDB entry payload: ", zap.Error(err))
 		return nil, err
 	}
-	res, err := n.KardiaCall(ctx, constructCallArgs(n.stakingSMC.ContractAddress.Hex(), payload))
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(n.stakingSMC.ContractAddress.Hex(), payload))
 	if err != nil {
 		n.lgr.Error("Get totalBonded KardiaCall error: ", zap.Error(err))
 		return nil, err
@@ -357,7 +357,7 @@ func (n *node) GetCirculatingSupply(ctx context.Context) (*big.Int, error) {
 		return nil, err
 	}
 
-	res, err := n.KardiaCall(ctx, constructCallArgs(n.stakingSMC.ContractAddress.Hex(), payload))
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(n.stakingSMC.ContractAddress.Hex(), payload))
 	if err != nil {
 		n.lgr.Error("GetCirculatingSupply KardiaCall error: ", zap.Error(err))
 		return nil, err
@@ -444,7 +444,7 @@ func (n *node) validatorSMCAddresses(ctx context.Context) ([]common.Address, err
 		return nil, err
 	}
 
-	res, err := n.KardiaCall(ctx, constructCallArgs(n.stakingSMC.ContractAddress.Hex(), payload))
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(n.stakingSMC.ContractAddress.Hex(), payload))
 	if err != nil {
 		return nil, err
 	}
