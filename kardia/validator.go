@@ -20,7 +20,9 @@ package kardia
 
 import (
 	"context"
+	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/kardiachain/go-kardia/lib/common"
 	"go.uber.org/zap"
@@ -42,10 +44,13 @@ func (n *node) Validators(ctx context.Context) ([]*Validator, error) {
 	}
 
 	for _, smcAddr := range validatorSMCAddresses {
+		loadValidatorStartTime := time.Now()
 		v, err := n.Validator(ctx, smcAddr.Hex())
 		if err != nil {
 			return nil, err
 		}
+		fmt.Printf("Finished load validator [%s] SMC [%s], delegator: [%d], total: %s \n", v.Name, v.SMCAddress.Hex(), len(v.Delegators),
+			time.Now().Sub(loadValidatorStartTime))
 		validators = append(validators, v)
 	}
 	return validators, nil
@@ -53,6 +58,7 @@ func (n *node) Validators(ctx context.Context) ([]*Validator, error) {
 
 func (n *node) Validator(ctx context.Context, validatorSMCAddress string) (*Validator, error) {
 	lgr := n.lgr.With(zap.String("method", "Validator"))
+	startLoadInfo := time.Now()
 	payload, err := n.validatorSMC.Abi.Pack("inforValidator")
 	if err != nil {
 		lgr.Error("Error packing validator info payload: ", zap.Error(err))
@@ -71,26 +77,33 @@ func (n *node) Validator(ctx context.Context, validatorSMCAddress string) (*Vali
 		return nil, err
 	}
 
+	fmt.Println("Finished load validator info", time.Now().Sub(startLoadInfo))
+
 	valInfo.SMCAddress = common.HexToAddress(validatorSMCAddress)
 
+	startGetValidatorComm := time.Now()
 	commission, err := n.getValidatorCommission(ctx, validatorSMCAddress)
 	if err != nil {
 		return nil, err
 	}
 	valInfo.Commission = commission
+	fmt.Println("Finished load get validator comm", time.Now().Sub(startGetValidatorComm))
 
+	startGetSigningInfo := time.Now()
 	signingInfo, err := n.getSigningInfo(ctx, validatorSMCAddress)
 	if err != nil {
 		return nil, err
 	}
 	valInfo.SigningInfo = signingInfo
-
-	delegators, err := n.getDelegators(ctx, validatorSMCAddress)
-	if err != nil {
-		return nil, err
-	}
-	valInfo.Delegators = delegators
-
+	fmt.Println("Finished load get signing info", time.Now().Sub(startGetSigningInfo))
+	//
+	//startGetDelegator := time.Now()
+	//delegators, err := n.getDelegators(ctx, validatorSMCAddress)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//valInfo.Delegators = delegators
+	//fmt.Println("Finished loade delegators", time.Now().Sub(startGetDelegator))
 	return &valInfo, nil
 }
 
@@ -187,16 +200,26 @@ func (n *node) getDelegators(ctx context.Context, validatorSMCAddress string) ([
 		return nil, err
 	}
 	var delegators []*Delegator
-	for _, delAddr := range result.Addresses {
+	for id, delAddr := range result.Addresses {
+
+		// Limit first 10 delegator
+		if id > 10 {
+			break
+		}
+		startGetReward := time.Now()
 		delegatorAddress := delAddr.Hex()
 		reward, err := n.getDelegationRewards(ctx, validatorSMCAddress, delegatorAddress)
 		if err != nil {
 			continue
 		}
+		fmt.Println("Finished load reward", time.Now().Sub(startGetReward))
+
+		startGetStakedAmount := time.Now()
 		stakedAmount, err := n.getDelegatorStakedAmount(ctx, validatorSMCAddress, delegatorAddress)
 		if err != nil {
 			continue
 		}
+		fmt.Println("Finished load staked amount", time.Now().Sub(startGetStakedAmount))
 		delegators = append(delegators, &Delegator{
 			Address:      delAddr,
 			StakedAmount: stakedAmount,

@@ -201,3 +201,22 @@ type Event struct {
 	TxHash     string
 	SMCAddress string
 }
+
+type FilterArgs struct {
+	From    uint64
+	To      uint64
+	Address []string
+	Topics  []string
+}
+
+type FilterLogs struct {
+	Address          string   `json:"address"`
+	BlockHash        string   `json:"blockHash"`
+	BlockHeight      uint64   `json:"blockHeight"`
+	Data             string   `json:"data"`
+	LogIndex         int64    `json:"logIndex"`
+	Removed          bool     `json:"removed"`
+	Topic            []string `json:"topic"`
+	TransactionHash  string   `json:"transactionHash"`
+	TransactionIndex int64    `json:"transactionIndex"`
+}

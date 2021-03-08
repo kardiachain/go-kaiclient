@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var url = "https://dev-1.kardiachain.io"
+var url = "https://rpc.kardiachain.io"
 
 func SetupNodeClient() (Node, error) {
 	lgr, err := zap.NewDevelopment()
@@ -16,6 +16,24 @@ func SetupNodeClient() (Node, error) {
 		return nil, err
 	}
 	node, err := NewNode(url, lgr)
+	if err != nil {
+		return nil, err
+	}
+
+	return node, nil
+}
+
+func SetupWSNodeClient() (Node, error) {
+	node, err := NewNode("ws://10.10.0.251:8550/ws", zap.L())
+	if err != nil {
+		return nil, err
+	}
+
+	return node, nil
+}
+
+func SetupDevNodeClient() (Node, error) {
+	node, err := NewNode("https://dev-1.kardiachain.io", zap.L())
 	if err != nil {
 		return nil, err
 	}
