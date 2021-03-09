@@ -28,6 +28,7 @@ import (
 
 type IStaking interface {
 	TotalStakedAmount(ctx context.Context) (*big.Int, error)
+	ValidatorSMCAddresses(ctx context.Context) ([]common.Address, error)
 }
 
 func (n *node) TotalStakedAmount(ctx context.Context) (*big.Int, error) {
@@ -52,6 +53,55 @@ func (n *node) TotalStakedAmount(ctx context.Context) (*big.Int, error) {
 		return nil, err
 	}
 	return result.TotalBonded, nil
+}
+
+func (n *node) ValidatorSMCAddresses(ctx context.Context) ([]common.Address, error) {
+	payload, err := n.stakingSMC.Abi.Pack("getAllValidator")
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(n.stakingSMC.ContractAddress.Hex(), payload))
+	if err != nil {
+		return nil, err
+	}
+	if len(res) == 0 {
+		return nil, ErrEmptyList
+	}
+
+	var validatorSMCAddresses []common.Address
+	// unpack result
+	err = n.stakingSMC.Abi.UnpackIntoInterface(&validatorSMCAddresses, "getAllValidator", res)
+	if err != nil {
+		return nil, err
+	}
+
+	return validatorSMCAddresses, nil
+}
+
+func (n *node) GetCirculatingSupply(ctx context.Context) (*big.Int, error) {
+	payload, err := n.stakingSMC.Abi.Pack("totalSupply")
+	if err != nil {
+		n.lgr.Error("Error packing circulating supply payload: ", zap.Error(err))
+		return nil, err
+	}
+
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(n.stakingSMC.ContractAddress.Hex(), payload))
+	if err != nil {
+		n.lgr.Error("GetCirculatingSupply KardiaCall error: ", zap.Error(err))
+		return nil, err
+	}
+
+	var result struct {
+		TotalSupply *big.Int
+	}
+	// unpack result
+	err = n.stakingSMC.Abi.UnpackIntoInterface(&result, "totalSupply", res)
+	if err != nil {
+		n.lgr.Error("Error unpacking circulating supply error: ", zap.Error(err))
+		return nil, err
+	}
+	return result.TotalSupply, nil
 }
 
 //
@@ -350,31 +400,6 @@ func (n *node) TotalStakedAmount(ctx context.Context) (*big.Int, error) {
 //}
 //
 // GetCirculatingSupply returns circulating supply at the moment
-func (n *node) GetCirculatingSupply(ctx context.Context) (*big.Int, error) {
-	payload, err := n.stakingSMC.Abi.Pack("totalSupply")
-	if err != nil {
-		n.lgr.Error("Error packing circulating supply payload: ", zap.Error(err))
-		return nil, err
-	}
-
-	res, err := n.KardiaCall(ctx, ConstructCallArgs(n.stakingSMC.ContractAddress.Hex(), payload))
-	if err != nil {
-		n.lgr.Error("GetCirculatingSupply KardiaCall error: ", zap.Error(err))
-		return nil, err
-	}
-
-	var result struct {
-		TotalSupply *big.Int
-	}
-	// unpack result
-	err = n.stakingSMC.Abi.UnpackIntoInterface(&result, "totalSupply", res)
-	if err != nil {
-		n.lgr.Error("Error unpacking circulating supply error: ", zap.Error(err))
-		return nil, err
-	}
-	return result.TotalSupply, nil
-}
-
 //// GetTreasuryContractAddress returns treasury contract address
 //func (ec *Client) GetTreasuryContractAddress(ctx context.Context) (common.Address, error) {
 //	payload, err := ec.stakingUtil.Abi.Pack("treasury")
@@ -411,53 +436,3 @@ func (n *node) GetCirculatingSupply(ctx context.Context) (*big.Int, error) {
 ////		Data:     common.Bytes(payload).String(),
 ////	}
 ////}
-//
-//
-//
-//func (ec *Client) validatorSMCAddresses(ctx context.Context) ([]common.Address, error) {
-//	payload, err := ec.stakingUtil.Abi.Pack("getAllValidator")
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	res, err := ec.KardiaCall(ctx, contructCallArgs(ec.stakingUtil.ContractAddress.Hex(), payload))
-//	if err != nil {
-//		return nil, err
-//	}
-//	if len(res) == 0 {
-//		return nil, ErrEmptyList
-//	}
-//
-//	var validatorSMCAddresses []common.Address
-//	// unpack result
-//	err = ec.stakingUtil.Abi.UnpackIntoInterface(&validatorSMCAddresses, "getAllValidator", res)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	return validatorSMCAddresses, nil
-//}
-
-func (n *node) validatorSMCAddresses(ctx context.Context) ([]common.Address, error) {
-	payload, err := n.stakingSMC.Abi.Pack("getAllValidator")
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := n.KardiaCall(ctx, ConstructCallArgs(n.stakingSMC.ContractAddress.Hex(), payload))
-	if err != nil {
-		return nil, err
-	}
-	if len(res) == 0 {
-		return nil, ErrEmptyList
-	}
-
-	var validatorSMCAddresses []common.Address
-	// unpack result
-	err = n.stakingSMC.Abi.UnpackIntoInterface(&validatorSMCAddresses, "getAllValidator", res)
-	if err != nil {
-		return nil, err
-	}
-
-	return validatorSMCAddresses, nil
-}

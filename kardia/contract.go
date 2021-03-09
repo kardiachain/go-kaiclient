@@ -11,16 +11,29 @@ type Contract struct {
 	Abi             *abi.ABI
 	ContractAddress common.Address
 	Bytecode        string
+}
+
+func NewContract(abi *abi.ABI, addr common.Address) *Contract {
+	c := &Contract{
+		Abi:             abi,
+		ContractAddress: addr,
+	}
+	return c
+}
+
+type BoundContract struct {
+	Abi             *abi.ABI
+	ContractAddress common.Address
+	Bytecode        string
 
 	*bind.BoundContract
 }
 
-func NewContract(node Node, abi *abi.ABI, addr common.Address) *Contract {
-	bc := bind.NewBoundContract(addr, *abi, node, node, nil)
-	c := &Contract{
+func NewBoundContract(node Node, abi *abi.ABI, addr common.Address) *BoundContract {
+	c := &BoundContract{
 		Abi:             abi,
 		ContractAddress: addr,
-		BoundContract:   bc,
+		BoundContract:   bind.NewBoundContract(addr, *abi, node, node, nil),
 	}
 
 	return c

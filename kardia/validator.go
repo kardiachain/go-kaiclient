@@ -29,34 +29,20 @@ import (
 )
 
 type IValidator interface {
-	Validator(ctx context.Context, validatorSMCAddr string) (*Validator, error)
+	ValidatorInfo(ctx context.Context, validatorSMCAddress string) (*Validator, error)
+	SigningInfo(ctx context.Context, validatorSMCAddress string) (*SigningInfo, error)
+	DelegatorAddresses(ctx context.Context, validatorSMCAddress string) ([]common.Address, error)
+	DelegationRewards(ctx context.Context, validatorSMCAddr, delegatorAddress string) (*big.Int, error)
+	DelegatorStakedAmount(ctx context.Context, validatorSMCAddress, delegatorAddress string) (*big.Int, error)
+	ValidatorCommission(ctx context.Context, valSmcAddr string) (*Commission, error)
+	SlashEvents(ctx context.Context, validatorSMCAddress string) ([]*SlashEvents, error)
+
+	//deprecated
 	Validators(ctx context.Context) ([]*Validator, error)
+	Validator(ctx context.Context, validatorSMCAddress string) (*Validator, error)
 }
 
-func (n *node) Validators(ctx context.Context) ([]*Validator, error) {
-	var (
-		validators []*Validator
-	)
-
-	validatorSMCAddresses, err := n.validatorSMCAddresses(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, smcAddr := range validatorSMCAddresses {
-		loadValidatorStartTime := time.Now()
-		v, err := n.Validator(ctx, smcAddr.Hex())
-		if err != nil {
-			return nil, err
-		}
-		fmt.Printf("Finished load validator [%s] SMC [%s], delegator: [%d], total: %s \n", v.Name, v.SMCAddress.Hex(), len(v.Delegators),
-			time.Now().Sub(loadValidatorStartTime))
-		validators = append(validators, v)
-	}
-	return validators, nil
-}
-
-func (n *node) Validator(ctx context.Context, validatorSMCAddress string) (*Validator, error) {
+func (n *node) ValidatorInfo(ctx context.Context, validatorSMCAddress string) (*Validator, error) {
 	lgr := n.lgr.With(zap.String("method", "Validator"))
 	startLoadInfo := time.Now()
 	payload, err := n.validatorSMC.Abi.Pack("inforValidator")
@@ -76,39 +62,12 @@ func (n *node) Validator(ctx context.Context, validatorSMCAddress string) (*Vali
 		lgr.Error("Error unpacking validator info: ", zap.Error(err))
 		return nil, err
 	}
-
 	fmt.Println("Finished load validator info", time.Now().Sub(startLoadInfo))
-
-	valInfo.SMCAddress = common.HexToAddress(validatorSMCAddress)
-
-	startGetValidatorComm := time.Now()
-	commission, err := n.getValidatorCommission(ctx, validatorSMCAddress)
-	if err != nil {
-		return nil, err
-	}
-	valInfo.Commission = commission
-	fmt.Println("Finished load get validator comm", time.Now().Sub(startGetValidatorComm))
-
-	startGetSigningInfo := time.Now()
-	signingInfo, err := n.getSigningInfo(ctx, validatorSMCAddress)
-	if err != nil {
-		return nil, err
-	}
-	valInfo.SigningInfo = signingInfo
-	fmt.Println("Finished load get signing info", time.Now().Sub(startGetSigningInfo))
-	//
-	//startGetDelegator := time.Now()
-	//delegators, err := n.getDelegators(ctx, validatorSMCAddress)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//valInfo.Delegators = delegators
-	//fmt.Println("Finished loade delegators", time.Now().Sub(startGetDelegator))
 	return &valInfo, nil
 }
 
-// Helper
-func (n *node) getSigningInfo(ctx context.Context, validatorSMCAddress string) (*SigningInfo, error) {
+//SigningInfo
+func (n *node) SigningInfo(ctx context.Context, validatorSMCAddress string) (*SigningInfo, error) {
 	lgr := n.lgr.With(zap.String("method", "getSigningInfo"))
 	payload, err := n.validatorSMC.Abi.Pack("signingInfo")
 	if err != nil {
@@ -130,107 +89,8 @@ func (n *node) getSigningInfo(ctx context.Context, validatorSMCAddress string) (
 	return &result, nil
 }
 
-// getDelegatorStakedAmount returns staked amount of a delegator to current validator
-func (n *node) getDelegatorStakedAmount(ctx context.Context, valSmcAddr, delegatorAddress string) (*big.Int, error) {
-	payload, err := n.validatorSMC.Abi.Pack("delegationByAddr", common.HexToAddress(delegatorAddress))
-	if err != nil {
-		n.lgr.Error("Error packing delegator staked amount payload: ", zap.Error(err))
-		return nil, err
-	}
-	res, err := n.KardiaCall(ctx, ConstructCallArgs(valSmcAddr, payload))
-	if err != nil {
-		n.lgr.Error("getDelegatorStakedAmount KardiaCall error: ", zap.Error(err))
-		return nil, err
-	}
-
-	var result struct {
-		Stake          *big.Int
-		PreviousPeriod *big.Int
-		Height         *big.Int
-		Shares         *big.Int
-		Owner          common.Address
-	}
-	// unpack result
-	err = n.validatorSMC.Abi.UnpackIntoInterface(&result, "delegationByAddr", res)
-	if err != nil {
-		n.lgr.Error("Error unpacking delegator's staked amount: ", zap.Error(err))
-		return nil, err
-	}
-	return result.Stake, nil
-}
-
-// GetValidator show info of a validator based on address
-func (n *node) getValidatorCommission(ctx context.Context, valSmcAddr string) (*Commission, error) {
-	payload, err := n.validatorSMC.Abi.Pack("commission")
-	if err != nil {
-		return nil, err
-	}
-	res, err := n.KardiaCall(ctx, ConstructCallArgs(valSmcAddr, payload))
-	if err != nil {
-		return nil, err
-	}
-
-	var result Commission
-	// unpack result
-	err = n.validatorSMC.Abi.UnpackIntoInterface(&result, "commission", res)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
-}
-
-func (n *node) getDelegators(ctx context.Context, validatorSMCAddress string) ([]*Delegator, error) {
-	payload, err := n.validatorSMC.Abi.Pack("getDelegations")
-	if err != nil {
-		return nil, err
-	}
-	res, err := n.KardiaCall(ctx, ConstructCallArgs(validatorSMCAddress, payload))
-	if err != nil {
-		return nil, err
-	}
-
-	var result struct {
-		Addresses []common.Address
-		Shares    []*big.Int
-	}
-	// unpack result
-	err = n.validatorSMC.Abi.UnpackIntoInterface(&result, "getDelegations", res)
-	if err != nil {
-		n.lgr.Error("Error unpacking delegation details", zap.Error(err))
-		return nil, err
-	}
-	var delegators []*Delegator
-	for id, delAddr := range result.Addresses {
-
-		// Limit first 10 delegator
-		if id > 10 {
-			break
-		}
-		startGetReward := time.Now()
-		delegatorAddress := delAddr.Hex()
-		reward, err := n.getDelegationRewards(ctx, validatorSMCAddress, delegatorAddress)
-		if err != nil {
-			continue
-		}
-		fmt.Println("Finished load reward", time.Now().Sub(startGetReward))
-
-		startGetStakedAmount := time.Now()
-		stakedAmount, err := n.getDelegatorStakedAmount(ctx, validatorSMCAddress, delegatorAddress)
-		if err != nil {
-			continue
-		}
-		fmt.Println("Finished load staked amount", time.Now().Sub(startGetStakedAmount))
-		delegators = append(delegators, &Delegator{
-			Address:      delAddr,
-			StakedAmount: stakedAmount,
-			Reward:       reward,
-		})
-	}
-	return delegators, nil
-}
-
-func (n *node) getDelegationRewards(ctx context.Context, validatorSMCAddr, delegatorAddress string) (*big.Int, error) {
-	payload, err := n.validatorSMC.Abi.Pack("getDelegationRewards", common.HexToAddress(delegatorAddress))
+func (n *node) DelegationRewards(ctx context.Context, validatorSMCAddr, delegatorAddress string) (*big.Int, error) {
+	payload, err := n.validatorSMC.Abi.Pack("DelegationRewards", common.HexToAddress(delegatorAddress))
 	if err != nil {
 		n.lgr.Error("Error packing delegation rewards payload: ", zap.Error(err))
 		return nil, err
@@ -244,7 +104,7 @@ func (n *node) getDelegationRewards(ctx context.Context, validatorSMCAddr, deleg
 		Rewards *big.Int
 	}
 	// unpack result
-	err = n.validatorSMC.Abi.UnpackIntoInterface(&result, "getDelegationRewards", res)
+	err = n.validatorSMC.Abi.UnpackIntoInterface(&result, "DelegationRewards", res)
 	if err != nil {
 		n.lgr.Error("Error unpacking delegation rewards: ", zap.Error(err))
 		return nil, err
@@ -252,8 +112,8 @@ func (n *node) getDelegationRewards(ctx context.Context, validatorSMCAddr, deleg
 	return result.Rewards, nil
 }
 
-// GetSlashEvents returns detailed all slash events of this validator
-func (n *node) GetSlashEvents(ctx context.Context, validatorSMCAddress string) ([]*SlashEvents, error) {
+// SlashEvents returns detailed all slash events of this validator
+func (n *node) SlashEvents(ctx context.Context, validatorSMCAddress string) ([]*SlashEvents, error) {
 	var events []*SlashEvents
 	eventsSize, err := n.getSlashEventsSize(ctx, validatorSMCAddress)
 	if err != nil {
@@ -286,6 +146,78 @@ func (n *node) GetSlashEvents(ctx context.Context, validatorSMCAddress string) (
 		})
 	}
 	return events, nil
+}
+
+// DelegatorStakedAmount returns staked amount of a delegator to current validator
+func (n *node) DelegatorStakedAmount(ctx context.Context, validatorSMCAddress, delegatorAddress string) (*big.Int, error) {
+	payload, err := n.validatorSMC.Abi.Pack("delegationByAddr", common.HexToAddress(delegatorAddress))
+	if err != nil {
+		n.lgr.Error("Error packing delegator staked amount payload: ", zap.Error(err))
+		return nil, err
+	}
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(validatorSMCAddress, payload))
+	if err != nil {
+		n.lgr.Error("DelegatorStakedAmount KardiaCall error: ", zap.Error(err))
+		return nil, err
+	}
+
+	var result struct {
+		Stake          *big.Int
+		PreviousPeriod *big.Int
+		Height         *big.Int
+		Shares         *big.Int
+		Owner          common.Address
+	}
+	// unpack result
+	err = n.validatorSMC.Abi.UnpackIntoInterface(&result, "delegationByAddr", res)
+	if err != nil {
+		n.lgr.Error("Error unpacking delegator's staked amount: ", zap.Error(err))
+		return nil, err
+	}
+	return result.Stake, nil
+}
+
+// GetValidator show info of a validator based on address
+func (n *node) ValidatorCommission(ctx context.Context, valSmcAddr string) (*Commission, error) {
+	payload, err := n.validatorSMC.Abi.Pack("commission")
+	if err != nil {
+		return nil, err
+	}
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(valSmcAddr, payload))
+	if err != nil {
+		return nil, err
+	}
+
+	var result Commission
+	// unpack result
+	err = n.validatorSMC.Abi.UnpackIntoInterface(&result, "commission", res)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func (n *node) DelegatorAddresses(ctx context.Context, validatorSMCAddress string) ([]common.Address, error) {
+	payload, err := n.validatorSMC.Abi.Pack("getDelegations")
+	if err != nil {
+		return nil, err
+	}
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(validatorSMCAddress, payload))
+	if err != nil {
+		return nil, err
+	}
+
+	var result struct {
+		Addresses []common.Address
+		Shares    []*big.Int
+	}
+	// unpack result
+	err = n.validatorSMC.Abi.UnpackIntoInterface(&result, "getDelegations", res)
+	if err != nil {
+		n.lgr.Error("Error unpacking delegation details", zap.Error(err))
+		return nil, err
+	}
+	return result.Addresses, nil
 }
 
 // getSlashEventsSize returns number of slash events of this validator
@@ -340,4 +272,126 @@ func (n *node) getValidatorSets(ctx context.Context) ([]common.Address, error) {
 		return nil, err
 	}
 	return result.ValAddrs, nil
+}
+
+//deprecated
+func (n *node) Validators(ctx context.Context) ([]*Validator, error) {
+	var (
+		validators []*Validator
+	)
+
+	validatorSMCAddresses, err := n.ValidatorSMCAddresses(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, smcAddr := range validatorSMCAddresses {
+		loadValidatorStartTime := time.Now()
+		v, err := n.Validator(ctx, smcAddr.Hex())
+		if err != nil {
+			return nil, err
+		}
+		fmt.Printf("Finished load validator [%s] SMC [%s], delegator: [%d], total: %s \n", v.Name, v.SMCAddress.Hex(), len(v.Delegators),
+			time.Now().Sub(loadValidatorStartTime))
+		validators = append(validators, v)
+	}
+	return validators, nil
+}
+
+// deprecated
+func (n *node) Validator(ctx context.Context, validatorSMCAddress string) (*Validator, error) {
+	lgr := n.lgr.With(zap.String("method", "Validator"))
+	startLoadInfo := time.Now()
+	payload, err := n.validatorSMC.Abi.Pack("inforValidator")
+	if err != nil {
+		lgr.Error("Error packing validator info payload: ", zap.Error(err))
+		return nil, err
+	}
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(validatorSMCAddress, payload))
+	if err != nil {
+		lgr.Error("GetValidatorInfo KardiaCall error: ", zap.Error(err))
+		return nil, err
+	}
+	var valInfo Validator
+	// unpack result
+	err = n.validatorSMC.Abi.UnpackIntoInterface(&valInfo, "inforValidator", res)
+	if err != nil {
+		lgr.Error("Error unpacking validator info: ", zap.Error(err))
+		return nil, err
+	}
+
+	fmt.Println("Finished load validator info", time.Now().Sub(startLoadInfo))
+
+	valInfo.SMCAddress = common.HexToAddress(validatorSMCAddress)
+
+	startGetValidatorComm := time.Now()
+	commission, err := n.ValidatorCommission(ctx, validatorSMCAddress)
+	if err != nil {
+		return nil, err
+	}
+	valInfo.Commission = commission
+	fmt.Println("Finished load get validator comm", time.Now().Sub(startGetValidatorComm))
+
+	startGetSigningInfo := time.Now()
+	signingInfo, err := n.SigningInfo(ctx, validatorSMCAddress)
+	if err != nil {
+		return nil, err
+	}
+	valInfo.SigningInfo = signingInfo
+	fmt.Println("Finished load get signing info", time.Now().Sub(startGetSigningInfo))
+	//
+	//startGetDelegator := time.Now()
+	//delegators, err := n.getDelegators(ctx, validatorSMCAddress)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//valInfo.Delegators = delegators
+	//fmt.Println("Finished loade delegators", time.Now().Sub(startGetDelegator))
+	return &valInfo, nil
+}
+
+// deprecated
+func (n *node) delegatorsOfValidator(ctx context.Context, validatorSMCAddress string) ([]*Delegator, error) {
+	payload, err := n.validatorSMC.Abi.Pack("getDelegations")
+	if err != nil {
+		return nil, err
+	}
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(validatorSMCAddress, payload))
+	if err != nil {
+		return nil, err
+	}
+
+	var result struct {
+		Addresses []common.Address
+		Shares    []*big.Int
+	}
+	// unpack result
+	err = n.validatorSMC.Abi.UnpackIntoInterface(&result, "getDelegations", res)
+	if err != nil {
+		n.lgr.Error("Error unpacking delegation details", zap.Error(err))
+		return nil, err
+	}
+	var delegators []*Delegator
+	for _, delAddr := range result.Addresses {
+		startGetReward := time.Now()
+		delegatorAddress := delAddr.Hex()
+		reward, err := n.DelegationRewards(ctx, validatorSMCAddress, delegatorAddress)
+		if err != nil {
+			continue
+		}
+		fmt.Println("Finished load reward", time.Now().Sub(startGetReward))
+
+		startGetStakedAmount := time.Now()
+		stakedAmount, err := n.DelegatorStakedAmount(ctx, validatorSMCAddress, delegatorAddress)
+		if err != nil {
+			continue
+		}
+		fmt.Println("Finished load staked amount", time.Now().Sub(startGetStakedAmount))
+		delegators = append(delegators, &Delegator{
+			Address:      delAddr,
+			StakedAmount: stakedAmount,
+			Reward:       reward,
+		})
+	}
+	return delegators, nil
 }
