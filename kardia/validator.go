@@ -90,7 +90,7 @@ func (n *node) SigningInfo(ctx context.Context, validatorSMCAddress string) (*Si
 }
 
 func (n *node) DelegationRewards(ctx context.Context, validatorSMCAddr, delegatorAddress string) (*big.Int, error) {
-	payload, err := n.validatorSMC.Abi.Pack("DelegationRewards", common.HexToAddress(delegatorAddress))
+	payload, err := n.validatorSMC.Abi.Pack("getDelegationRewards", common.HexToAddress(delegatorAddress))
 	if err != nil {
 		n.lgr.Error("Error packing delegation rewards payload: ", zap.Error(err))
 		return nil, err
@@ -104,7 +104,7 @@ func (n *node) DelegationRewards(ctx context.Context, validatorSMCAddr, delegato
 		Rewards *big.Int
 	}
 	// unpack result
-	err = n.validatorSMC.Abi.UnpackIntoInterface(&result, "DelegationRewards", res)
+	err = n.validatorSMC.Abi.UnpackIntoInterface(&result, "getDelegationRewards", res)
 	if err != nil {
 		n.lgr.Error("Error unpacking delegation rewards: ", zap.Error(err))
 		return nil, err
@@ -394,4 +394,26 @@ func (n *node) delegatorsOfValidator(ctx context.Context, validatorSMCAddress st
 		})
 	}
 	return delegators, nil
+}
+
+func (n *node) Delegator(ctx context.Context, validatorSMCAddress, delegatorAddress common.Address) (*Delegator, error) {
+	startGetReward := time.Now()
+	reward, err := n.DelegationRewards(ctx, validatorSMCAddress.Hex(), delegatorAddress.Hex())
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println("Finished load reward", time.Now().Sub(startGetReward))
+
+	startGetStakedAmount := time.Now()
+	stakedAmount, err := n.DelegatorStakedAmount(ctx, validatorSMCAddress.Hex(), delegatorAddress.Hex())
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println("Finished load staked amount", time.Now().Sub(startGetStakedAmount))
+	d := &Delegator{
+		Address:      delegatorAddress,
+		StakedAmount: stakedAmount,
+		Reward:       reward,
+	}
+	return d, nil
 }

@@ -87,7 +87,7 @@ func TestValidator_Details(t *testing.T) {
 	hodler := "0x4dAe614b2eA2FaeeDDE7830A2e7fcEDdAE9f9161"
 	v, err := node.ValidatorInfo(ctx, hodler)
 	assert.Nil(t, err)
-	fmt.Println("Validator Details", v)
+	fmt.Printf("Validator Details: %+v\n", v)
 
 }
 
@@ -96,12 +96,15 @@ func TestValidator_GetDelegation(t *testing.T) {
 	node, err := SetupNodeClient()
 	assert.Nil(t, err)
 
-	provins := "0xba3D559137Bfe98D3BF0d44D7b34B15A9530c060"
+	vSMC := "0xdC4A94805f449A64B27B589233C49d87eE99fBBc"
 	addr := "0x458892022e66FE0Ef264fE6240EE59fC2FB0A62C"
-	stakedAmount, err := node.DelegatorStakedAmount(ctx, provins, addr)
+	stakedAmount, err := node.DelegatorStakedAmount(ctx, vSMC, addr)
 	assert.Nil(t, err)
 	fmt.Println("StakedAmount", stakedAmount.String())
 
+	rewardAMount, err := node.DelegationRewards(ctx, vSMC, addr)
+	assert.Nil(t, err)
+	fmt.Println("RewardAmount", rewardAMount.String())
 }
 
 func TestValidator_List(t *testing.T) {
@@ -144,6 +147,10 @@ func TestValidator_List(t *testing.T) {
 		//	}
 		//}
 	}
+}
+
+func loadValidatorInfo() {
+
 }
 
 func calculateStats(t *testing.T) {
