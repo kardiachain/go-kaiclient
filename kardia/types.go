@@ -237,6 +237,6 @@ type ValidatorsByDelegator struct {
 }
 
 type UnbondedRecord struct {
-	Balances        string `json:"balance"`
-	CompletionTimes string `json:"completionTime"`
+	Balances        []*big.Int `json:"balances"`
+	CompletionTimes []*big.Int `json:"completionTimes"`
 }
