@@ -4,22 +4,21 @@ package kardia
 import (
 	"context"
 
-	"github.com/kardiachain/go-kardia/lib/common"
 	"go.uber.org/zap"
 )
 
 type IDelegator interface {
-	UnbondedRecords(ctx context.Context, validatorSMCAddress common.Address, delegatorAddress common.Address) ([]*UnbondedRecord, error)
+	UnbondedRecords(ctx context.Context, validatorSMCAddress, delegatorAddress string) (*UnbondedRecord, error)
 }
 
-func (n *node) UnbondedRecords(ctx context.Context, validatorSMCAddress common.Address, delegatorAddress common.Address) (*UnbondedRecord, error) {
+func (n *node) UnbondedRecords(ctx context.Context, validatorSMCAddress, delegatorAddress string) (*UnbondedRecord, error) {
 	lgr := n.lgr.With(zap.String("method", "UnbondedRecords"))
-	payload, err := n.validatorSMC.Abi.Pack("getUBDEntries", delegatorAddress.Hex())
+	payload, err := n.validatorSMC.Abi.Pack("getUBDEntries", delegatorAddress)
 	if err != nil {
 		lgr.Error("Error packing UDB entry payload: ", zap.Error(err))
 		return nil, err
 	}
-	res, err := n.KardiaCall(ctx, ConstructCallArgs(validatorSMCAddress.Hex(), payload))
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(validatorSMCAddress, payload))
 	if err != nil {
 		lgr.Error("GetUDBEntry KardiaCall error: ", zap.Error(err))
 		return nil, err
