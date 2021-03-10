@@ -234,7 +234,7 @@ func TestSMC_AddSpin(t *testing.T) {
 	abiData, err := abi.JSON(r)
 	assert.Nil(t, err)
 
-	smc := NewContract(node, &abiData, common.HexToAddress(WheelSMCAddr))
+	smc := NewBoundContract(node, &abiData, common.HexToAddress(WheelSMCAddr))
 
 	pubKey, privateKey, err := SetupTestAccount()
 	assert.Nil(t, err)
@@ -265,7 +265,7 @@ func BenchmarkWheelSpin(b *testing.B) {
 	abiData, err := abi.JSON(r)
 	assert.Nil(b, err)
 
-	smc := NewContract(node, &abiData, common.HexToAddress(WheelSMCAddr))
+	smc := NewBoundContract(node, &abiData, common.HexToAddress(WheelSMCAddr))
 
 	// run the Fib function b.N times
 	fmt.Println("TotalRun", b.N)
@@ -322,7 +322,7 @@ func FullFlow() error {
 	fromAddress := crypto.PubkeyToAddress(*pubKey)
 	//	fmt.Println("Priv", privateKey)
 
-	smc := NewContract(node, &abiData, common.HexToAddress(WheelSMCAddr))
+	smc := NewBoundContract(node, &abiData, common.HexToAddress(WheelSMCAddr))
 
 	totalSpin, err := TotalSpin(ctx, node, smc, fromAddress)
 	if err != nil {
@@ -355,7 +355,7 @@ func FullFlow() error {
 	return nil
 }
 
-func TotalSpin(ctx context.Context, node Node, smc *Contract, addr common.Address) (uint64, error) {
+func TotalSpin(ctx context.Context, node Node, smc *BoundContract, addr common.Address) (uint64, error) {
 	payload, err := smc.Abi.Pack("numberOfSpin", addr)
 	if err != nil {
 		return 0, err
@@ -377,7 +377,7 @@ func TotalSpin(ctx context.Context, node Node, smc *Contract, addr common.Addres
 	return result.Reward.Uint64(), nil
 }
 
-func Spin(ctx context.Context, node Node, smc *Contract, addr common.Address, privateKey *ecdsa.PrivateKey) (string, error) {
+func Spin(ctx context.Context, node Node, smc *BoundContract, addr common.Address, privateKey *ecdsa.PrivateKey) (string, error) {
 	nonce, err := node.NonceAt(context.Background(), addr.Hex())
 	if err != nil {
 		return "", err
@@ -404,7 +404,7 @@ func TestSMC_WheelSpin(t *testing.T) {
 	abiData, err := abi.JSON(r)
 	assert.Nil(t, err)
 
-	smc := NewContract(node, &abiData, common.HexToAddress(WheelSMCAddr))
+	smc := NewBoundContract(node, &abiData, common.HexToAddress(WheelSMCAddr))
 
 	pubKey, privateKey, err := SetupTestAccount()
 	assert.Nil(t, err)
@@ -425,7 +425,7 @@ func TestSMC_WheelSpin(t *testing.T) {
 	fmt.Println("TxHash", tx.Hash().String())
 }
 
-func TotalReward(ctx context.Context, node Node, smc *Contract, fromAddr common.Address) (uint64, error) {
+func TotalReward(ctx context.Context, node Node, smc *BoundContract, fromAddr common.Address) (uint64, error) {
 	payload, err := smc.Abi.Pack("reward", common.HexToAddress("0x4f36A53DC32272b97Ae5FF511387E2741D727bdb"))
 	if err != nil {
 		return 0, err
@@ -486,7 +486,7 @@ func TestSMC_WheelSpinWithWait(t *testing.T) {
 	currentHeight, err := node.LatestBlockNumber(ctx)
 	assert.Nil(t, err)
 
-	smc := NewContract(node, &abiData, common.HexToAddress(WheelSMCAddr))
+	smc := NewBoundContract(node, &abiData, common.HexToAddress(WheelSMCAddr))
 
 	pubKey, privateKey, err := SetupTestAccount()
 	assert.Nil(t, err)

@@ -105,14 +105,15 @@ func (n *node) GetCirculatingSupply(ctx context.Context) (*big.Int, error) {
 }
 
 //
-//func (ec *Client) GetValidatorsByDelegator(ctx context.Context, delAddr common.Address) ([]*types.ValidatorsByDelegator, error) {
+//
+//func (n *node) GetValidatorsByDelegator(ctx context.Context, delAddr common.Address) ([]*ValidatorsByDelegator, error) {
 //	// construct input data
-//	payload, err := ec.stakingUtil.Abi.Pack("getValidatorsByDelegator", delAddr)
+//	payload, err := n.stakingSMC.Abi.Pack("getValidatorsByDelegator", delAddr)
 //	if err != nil {
 //		return nil, err
 //	}
 //	// make static call through `kai_kardiaCall` API
-//	res, err := ec.KardiaCall(ctx, contructCallArgs(ec.stakingUtil.ContractAddress.Hex(), payload))
+//	res, err := n.KardiaCall(ctx, ConstructCallArgs(n.stakingSMC.ContractAddress.Hex(), payload))
 //	if err != nil {
 //		return nil, err
 //	}
@@ -121,7 +122,7 @@ func (n *node) GetCirculatingSupply(ctx context.Context) (*big.Int, error) {
 //		ValAddrs []common.Address
 //	}
 //	// unpacking data
-//	err = ec.stakingUtil.Abi.UnpackIntoInterface(&valAddrs, "getValidatorsByDelegator", res)
+//	err = n.stakingSMC.Abi.UnpackIntoInterface(&valAddrs, "getValidatorsByDelegator", res)
 //	if err != nil {
 //		return nil, err
 //	}
@@ -147,15 +148,15 @@ func (n *node) GetCirculatingSupply(ctx context.Context) (*big.Int, error) {
 //		if err != nil {
 //			return nil, err
 //		}
-//		reward, err := ec.GetDelegationRewards(ctx, val, delAddr)
+//		reward, err := n.DelegationRewards(ctx, val, delAddr)
 //		if err != nil {
 //			continue
 //		}
-//		stakedAmount, err := ec.GetDelegatorStakedAmount(ctx, val, delAddr)
+//		stakedAmount, err := n.DelegatorStakedAmount(ctx, val, delAddr)
 //		if err != nil {
 //			continue
 //		}
-//		unbondedAmount, withdrawableAmount, err := ec.GetUDBEntries(ctx, val, delAddr)
+//		unbondedAmount, withdrawableAmount, err := n.UnbondedRecords(ctx, val, delAddr)
 //		if err != nil {
 //			continue
 //		}

@@ -220,3 +220,23 @@ type FilterLogs struct {
 	TransactionHash  string   `json:"transactionHash"`
 	TransactionIndex int64    `json:"transactionIndex"`
 }
+
+type ValidatorsByDelegator struct {
+	Name                    string            `json:"name"`
+	Validator               common.Address    `json:"validator"`
+	ValidatorContractAddr   common.Address    `json:"validatorContractAddr"`
+	ValidatorStatus         uint8             `json:"validatorStatus"`
+	ValidatorRole           int               `json:"validatorRole"`
+	StakedAmount            string            `json:"stakedAmount"`
+	ClaimableRewards        string            `json:"claimableRewards"`
+	UnbondedRecords         []*UnbondedRecord `json:"unbondedRecords"`
+	TotalWithdrawableAmount string            `json:"totalWithdrawableAmount"`
+	TotalUnbondedAmount     string            `json:"totalUnbondedAmount"`
+	UnbondedAmount          string            `json:"unbondedAmount"`
+	WithdrawableAmount      string            `json:"withdrawableAmount"`
+}
+
+type UnbondedRecord struct {
+	Balances        string `json:"balance"`
+	CompletionTimes string `json:"completionTime"`
+}

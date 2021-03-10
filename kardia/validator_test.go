@@ -80,32 +80,81 @@ func BenchmarkValidator_CommissionRate(b *testing.B) {
 	}
 }
 
-func TestValidator_Validator(t *testing.T) {
+func TestValidator_Details(t *testing.T) {
 	ctx := context.Background()
 	node, err := SetupNodeClient()
 	assert.Nil(t, err)
+	hodler := "0x4dAe614b2eA2FaeeDDE7830A2e7fcEDdAE9f9161"
+	v, err := node.ValidatorInfo(ctx, hodler)
+	assert.Nil(t, err)
+	fmt.Println("Validator Details", v)
+
+}
+
+func TestValidator_GetDelegation(t *testing.T) {
+	ctx := context.Background()
+	node, err := SetupNodeClient()
+	assert.Nil(t, err)
+
+	provins := "0xba3D559137Bfe98D3BF0d44D7b34B15A9530c060"
+	addr := "0x458892022e66FE0Ef264fE6240EE59fC2FB0A62C"
+	stakedAmount, err := node.DelegatorStakedAmount(ctx, provins, addr)
+	assert.Nil(t, err)
+	fmt.Println("StakedAmount", stakedAmount.String())
+
+}
+
+func TestValidator_List(t *testing.T) {
+	ctx := context.Background()
+	node, err := SetupNodeClient()
+	assert.Nil(t, err)
+
+	totalStakedAmount, err := node.TotalStakedAmount(ctx)
+	assert.Nil(t, err)
+	fmt.Println("TotalStakedAmount", totalStakedAmount.String())
 	validatorSMCAddresses, err := node.ValidatorSMCAddresses(ctx)
 	assert.Nil(t, err)
 	for _, smcAddr := range validatorSMCAddresses {
 		// Get basic info
-		validator, err := node.ValidatorInfo(ctx, smcAddr.Hex())
+		nValidator, err := node.ValidatorInfo(ctx, smcAddr.Hex())
 		assert.Nil(t, err)
-		fmt.Printf("ValidatorInfo: %+v \n", validator)
-
-		signInfo, err := node.SigningInfo(ctx, smcAddr.Hex())
+		fmt.Printf("ValidatorInfo: %+v \n", nValidator)
+		commission, err := node.ValidatorCommission(ctx, smcAddr.Hex())
 		assert.Nil(t, err)
-		fmt.Println("SignInfo", signInfo)
-
+		fmt.Println("Commission", commission)
+		selfStakedAmount, err := node.DelegatorStakedAmount(ctx, smcAddr.Hex(), nValidator.Signer.Hex())
+		assert.Nil(t, err)
+		fmt.Println("Self staked amount", selfStakedAmount)
 		delegatorAddresses, err := node.DelegatorAddresses(ctx, smcAddr.Hex())
 		assert.Nil(t, err)
-		for _, addr := range delegatorAddresses {
-			if addr.Equal(validator.Signer) {
-				// Get self delegated info
-				stakedAmount, err := node.DelegatorStakedAmount(ctx, smcAddr.Hex(), addr.Hex())
-				assert.Nil(t, err)
-				fmt.Println("Self-staked", stakedAmount.String())
-			}
-		}
+		fmt.Println("Delegators size", len(delegatorAddresses))
 
+		//signInfo, err := node.SigningInfo(ctx, smcAddr.Hex())
+		//assert.Nil(t, err)
+		//fmt.Println("SignInfo", signInfo)
+
+		//delegatorAddresses, err := node.DelegatorAddresses(ctx, smcAddr.Hex())
+		//assert.Nil(t, err)
+		//for _, addr := range delegatorAddresses {
+		//	if addr.Equal(validator.Signer) {
+		//		// Get self delegated info
+		//		stakedAmount, err := node.DelegatorStakedAmount(ctx, smcAddr.Hex(), addr.Hex())
+		//		assert.Nil(t, err)
+		//		fmt.Println("Self-staked", stakedAmount.String())
+		//	}
+		//}
 	}
+}
+
+func calculateStats(t *testing.T) {
+	ctx := context.Background()
+	node, err := SetupNodeClient()
+	assert.Nil(t, err)
+	totalStaked, err := node.TotalStakedAmount(ctx)
+	assert.Nil(t, err)
+	fmt.Println("Total staked", totalStaked.String())
+}
+
+func Test_GetValidatorsOfDelegator(t *testing.T) {
+
 }
