@@ -39,6 +39,7 @@ const (
 )
 
 type Node interface {
+	Url() string
 	IsAlive() bool
 	Info(ctx context.Context) (*NodeInfo, error)
 
@@ -80,6 +81,10 @@ type node struct {
 	paramsSMC    *Contract
 }
 
+func (n *node) Url() string {
+	return n.url
+}
+
 //ContractTransactor
 func (n *node) PendingCodeAt(ctx context.Context, account common.Address) ([]byte, error) {
 	panic("implement me")
@@ -113,6 +118,7 @@ func NewNode(url string, lgr *zap.Logger) (Node, error) {
 	}
 	node := &node{
 		client: rpcClient,
+		url:    url,
 		lgr:    lgr,
 	}
 	if err := node.setupSMC(); err != nil {
