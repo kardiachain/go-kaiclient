@@ -40,6 +40,7 @@ type IValidator interface {
 	//deprecated
 	Validators(ctx context.Context) ([]*Validator, error)
 	Validator(ctx context.Context, validatorSMCAddress string) (*Validator, error)
+	ValidatorSets(ctx context.Context) ([]common.Address, error)
 }
 
 func (n *node) ValidatorInfo(ctx context.Context, validatorSMCAddress string) (*Validator, error) {
@@ -62,7 +63,7 @@ func (n *node) ValidatorInfo(ctx context.Context, validatorSMCAddress string) (*
 		lgr.Error("Error unpacking validator info: ", zap.Error(err))
 		return nil, err
 	}
-	fmt.Println("Finished load validator info", time.Now().Sub(startLoadInfo))
+	lgr.Debug("Finished load validator info", zap.Duration("Time", time.Now().Sub(startLoadInfo)))
 	return &valInfo, nil
 }
 
@@ -247,7 +248,7 @@ func (n *node) getSlashEventsSize(ctx context.Context, validatorSMCAddress strin
 	return slashEventsSize, nil
 }
 
-func (n *node) getValidatorSets(ctx context.Context) ([]common.Address, error) {
+func (n *node) ValidatorSets(ctx context.Context) ([]common.Address, error) {
 	payload, err := n.stakingSMC.Abi.Pack("getValidatorSets")
 	if err != nil {
 		n.lgr.Error("Error packing proposers list payload: ", zap.Error(err))
@@ -276,6 +277,7 @@ func (n *node) getValidatorSets(ctx context.Context) ([]common.Address, error) {
 
 //deprecated
 func (n *node) Validators(ctx context.Context) ([]*Validator, error) {
+	lgr := n.lgr.With(zap.String("method", "Validators"))
 	var (
 		validators []*Validator
 	)
@@ -291,8 +293,7 @@ func (n *node) Validators(ctx context.Context) ([]*Validator, error) {
 		if err != nil {
 			return nil, err
 		}
-		fmt.Printf("Finished load validator [%s] SMC [%s], delegator: [%d], total: %s \n", v.Name, v.SMCAddress.Hex(), len(v.Delegators),
-			time.Now().Sub(loadValidatorStartTime))
+		lgr.Debug("Finished load validator", zap.String("Validator", fmt.Sprintf("%s", v.Name)), zap.String("SMCAddress", v.SMCAddress.String()), zap.Int("TotalDelegator", len(v.Delegators)), zap.Duration("Total", time.Now().Sub(loadValidatorStartTime)))
 		validators = append(validators, v)
 	}
 	return validators, nil
@@ -319,18 +320,15 @@ func (n *node) Validator(ctx context.Context, validatorSMCAddress string) (*Vali
 		lgr.Error("Error unpacking validator info: ", zap.Error(err))
 		return nil, err
 	}
-
-	fmt.Println("Finished load validator info", time.Now().Sub(startLoadInfo))
-
+	lgr.Debug("Finished load validator info", zap.Duration("Total", time.Now().Sub(startLoadInfo)))
 	valInfo.SMCAddress = common.HexToAddress(validatorSMCAddress)
-
 	startGetValidatorComm := time.Now()
 	commission, err := n.ValidatorCommission(ctx, validatorSMCAddress)
 	if err != nil {
 		return nil, err
 	}
 	valInfo.Commission = commission
-	fmt.Println("Finished load get validator comm", time.Now().Sub(startGetValidatorComm))
+	lgr.Debug("Finished load get validator comm", zap.Duration("Total", time.Now().Sub(startGetValidatorComm)))
 
 	startGetSigningInfo := time.Now()
 	signingInfo, err := n.SigningInfo(ctx, validatorSMCAddress)
@@ -338,20 +336,13 @@ func (n *node) Validator(ctx context.Context, validatorSMCAddress string) (*Vali
 		return nil, err
 	}
 	valInfo.SigningInfo = signingInfo
-	fmt.Println("Finished load get signing info", time.Now().Sub(startGetSigningInfo))
-	//
-	//startGetDelegator := time.Now()
-	//delegators, err := n.getDelegators(ctx, validatorSMCAddress)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//valInfo.Delegators = delegators
-	//fmt.Println("Finished loade delegators", time.Now().Sub(startGetDelegator))
+	lgr.Debug("Finished load get signing info", zap.Duration("Time", time.Now().Sub(startGetSigningInfo)))
 	return &valInfo, nil
 }
 
 // deprecated
 func (n *node) delegatorsOfValidator(ctx context.Context, validatorSMCAddress string) ([]*Delegator, error) {
+	lgr := n.lgr.With(zap.String("method", "delegatorsOfValidator"))
 	payload, err := n.validatorSMC.Abi.Pack("getDelegations")
 	if err != nil {
 		return nil, err
@@ -379,14 +370,14 @@ func (n *node) delegatorsOfValidator(ctx context.Context, validatorSMCAddress st
 		if err != nil {
 			continue
 		}
-		fmt.Println("Finished load reward", time.Now().Sub(startGetReward))
+		lgr.Debug("Finished load reward", zap.Duration("Total", time.Now().Sub(startGetReward)))
 
 		startGetStakedAmount := time.Now()
 		stakedAmount, err := n.DelegatorStakedAmount(ctx, validatorSMCAddress, delegatorAddress)
 		if err != nil {
 			continue
 		}
-		fmt.Println("Finished load staked amount", time.Now().Sub(startGetStakedAmount))
+		lgr.Debug("Finished load staked amount", zap.Duration("Total", time.Now().Sub(startGetStakedAmount)))
 		delegators = append(delegators, &Delegator{
 			Address:      delAddr,
 			StakedAmount: stakedAmount,
@@ -397,19 +388,20 @@ func (n *node) delegatorsOfValidator(ctx context.Context, validatorSMCAddress st
 }
 
 func (n *node) Delegator(ctx context.Context, validatorSMCAddress, delegatorAddress common.Address) (*Delegator, error) {
+	lgr := n.lgr.With(zap.String("method", "Delegator"))
 	startGetReward := time.Now()
 	reward, err := n.DelegationRewards(ctx, validatorSMCAddress.Hex(), delegatorAddress.Hex())
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("Finished load reward", time.Now().Sub(startGetReward))
+	lgr.Debug("Finished load reward", zap.Duration("Total", time.Now().Sub(startGetReward)))
 
 	startGetStakedAmount := time.Now()
 	stakedAmount, err := n.DelegatorStakedAmount(ctx, validatorSMCAddress.Hex(), delegatorAddress.Hex())
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("Finished load staked amount", time.Now().Sub(startGetStakedAmount))
+	lgr.Debug("Finished load staked amount", zap.Duration("Total", time.Now().Sub(startGetStakedAmount)))
 	d := &Delegator{
 		Address:      delegatorAddress,
 		StakedAmount: stakedAmount,

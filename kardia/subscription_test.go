@@ -15,7 +15,6 @@ import (
 func TestSubscription_NewBlockHead(t *testing.T) {
 	lgr, err := zap.NewDevelopment()
 	assert.Nil(t, err)
-	//url := "wss://ws.kardiachain.io/ws"
 	url := "wss://ws-dev.kardiachain.io/ws"
 
 	node, err := NewNode(url, lgr)
