@@ -676,12 +676,12 @@
     "outputs": [
       {
         "internalType": "address[]",
-        "name": "",
+        "name": "validatorAddresses",
         "type": "address[]"
       },
       {
         "internalType": "uint256[]",
-        "name": "",
+        "name": "validatorPowers",
         "type": "uint256[]"
       }
     ],

@@ -264,15 +264,15 @@ func (n *node) ValidatorSets(ctx context.Context) ([]common.Address, error) {
 		return nil, nil
 	}
 	var result struct {
-		ValAddrs []common.Address
-		Powers   []*big.Int
+		ValidatorAddresses []common.Address
+		ValidatorPowers    []*big.Int
 	}
 	err = n.stakingSMC.Abi.UnpackIntoInterface(&result, "getValidatorSets", res)
 	if err != nil {
 		n.lgr.Error("Error unpacking proposers list error: ", zap.Error(err))
 		return nil, err
 	}
-	return result.ValAddrs, nil
+	return result.ValidatorAddresses, nil
 }
 
 //deprecated

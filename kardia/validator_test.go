@@ -165,3 +165,13 @@ func calculateStats(t *testing.T) {
 func Test_GetValidatorsOfDelegator(t *testing.T) {
 
 }
+
+func Test_ValidatorSets(t *testing.T) {
+	ctx := context.Background()
+	node, err := SetupNodeClient()
+	assert.Nil(t, err)
+
+	sets, err := node.ValidatorSets(ctx)
+	assert.Nil(t, err)
+	fmt.Println("Set", sets)
+}
