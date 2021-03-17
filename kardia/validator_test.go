@@ -175,3 +175,25 @@ func Test_ValidatorSets(t *testing.T) {
 	assert.Nil(t, err)
 	fmt.Println("Set", sets)
 }
+
+//SMCAddressOfValidator
+
+func Test_SMCAddressOfValidator(t *testing.T) {
+	ctx := context.Background()
+	node, err := SetupNodeClient()
+	assert.Nil(t, err)
+
+	sets, err := node.SMCAddressOfValidator(ctx, "0x5CdF7E0bBF0C53b5f4e612Fa66f0E60169e3a006")
+	assert.Nil(t, err)
+	fmt.Println("Set", sets)
+} //
+
+func Test_ValidatorAddressOfSMC(t *testing.T) {
+	ctx := context.Background()
+	node, err := SetupNodeClient()
+	assert.Nil(t, err)
+
+	sets, err := node.ValidatorAddressOfSMC(ctx, "0x50a26DF56fC91eECF7f25D52eFB4eFAB56Dacf08")
+	assert.Nil(t, err)
+	fmt.Println("Set", sets)
+}

@@ -415,7 +415,7 @@ func (n *node) Delegator(ctx context.Context, validatorSMCAddress, delegatorAddr
 func (n *node) SMCAddressOfValidator(ctx context.Context, validatorAddress string) (common.Address, error) {
 	lgr := n.lgr.With(zap.String("method", "SMCAddressOfValidator"))
 
-	payload, err := n.stakingSMC.Abi.Pack("ownerOf", validatorAddress)
+	payload, err := n.stakingSMC.Abi.Pack("ownerOf", common.HexToAddress(validatorAddress))
 	if err != nil {
 		lgr.Error("Error packing validator SMC of owner payload: ", zap.Error(err))
 		return common.Address{}, err
@@ -443,7 +443,7 @@ func (n *node) SMCAddressOfValidator(ctx context.Context, validatorAddress strin
 
 func (n *node) ValidatorAddressOfSMC(ctx context.Context, validatorSMCAddress string) (common.Address, error) {
 	lgr := n.lgr.With(zap.String("method", "ValidatorAddressOfSMC"))
-	payload, err := n.stakingSMC.Abi.Pack("valOf", validatorSMCAddress)
+	payload, err := n.stakingSMC.Abi.Pack("valOf", common.HexToAddress(validatorSMCAddress))
 	if err != nil {
 		lgr.Error("Error packing owner of validator SMC payload: ", zap.Error(err))
 		return common.Address{}, err
