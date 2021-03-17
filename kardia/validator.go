@@ -41,6 +41,8 @@ type IValidator interface {
 	Validators(ctx context.Context) ([]*Validator, error)
 	Validator(ctx context.Context, validatorSMCAddress string) (*Validator, error)
 	ValidatorSets(ctx context.Context) ([]common.Address, error)
+	SMCAddressOfValidator(ctx context.Context, validatorAddress string) (common.Address, error)
+	ValidatorAddressOfSMC(ctx context.Context, validatorSMCAddress string) (common.Address, error)
 }
 
 func (n *node) ValidatorInfo(ctx context.Context, validatorSMCAddress string) (*Validator, error) {
@@ -408,4 +410,60 @@ func (n *node) Delegator(ctx context.Context, validatorSMCAddress, delegatorAddr
 		Reward:       reward,
 	}
 	return d, nil
+}
+
+func (n *node) SMCAddressOfValidator(ctx context.Context, validatorAddress string) (common.Address, error) {
+	lgr := n.lgr.With(zap.String("method", "SMCAddressOfValidator"))
+
+	payload, err := n.stakingSMC.Abi.Pack("ownerOf", validatorAddress)
+	if err != nil {
+		lgr.Error("Error packing validator SMC of owner payload: ", zap.Error(err))
+		return common.Address{}, err
+	}
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(n.stakingSMC.ContractAddress.Hex(), payload))
+	if err != nil {
+		lgr.Error("GetValidatorSMCFromOwner KardiaCall error: ", zap.Error(err))
+		return common.Address{}, err
+	}
+
+	if len(res) == 0 {
+		lgr.Debug("GetValidatorSMCFromOwner KardiaCall empty result")
+		return common.Address{}, fmt.Errorf("found nothing")
+	}
+	var result struct {
+		ValSmcAddr common.Address
+	}
+	err = n.stakingSMC.Abi.UnpackIntoInterface(&result, "ownerOf", res)
+	if err != nil {
+		lgr.Error("Error unpacking validator SMC of owner error: ", zap.Error(err))
+		return common.Address{}, err
+	}
+	return result.ValSmcAddr, nil
+}
+
+func (n *node) ValidatorAddressOfSMC(ctx context.Context, validatorSMCAddress string) (common.Address, error) {
+	lgr := n.lgr.With(zap.String("method", "ValidatorAddressOfSMC"))
+	payload, err := n.stakingSMC.Abi.Pack("valOf", validatorSMCAddress)
+	if err != nil {
+		lgr.Error("Error packing owner of validator SMC payload: ", zap.Error(err))
+		return common.Address{}, err
+	}
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(n.stakingSMC.ContractAddress.Hex(), payload))
+	if err != nil {
+		lgr.Error("GetOwnerFromValidatorSMC KardiaCall error: ", zap.Error(err))
+		return common.Address{}, err
+	}
+	if len(res) == 0 {
+		lgr.Debug("GetOwnerFromValidatorSMC KardiaCall empty result")
+		return common.Address{}, fmt.Errorf("cannot found")
+	}
+	var result struct {
+		ValSmcAddr common.Address
+	}
+	err = n.stakingSMC.Abi.UnpackIntoInterface(&result, "valOf", res)
+	if err != nil {
+		lgr.Error("Error unpacking owner of validator SMC error: ", zap.Error(err))
+		return common.Address{}, err
+	}
+	return result.ValSmcAddr, nil
 }

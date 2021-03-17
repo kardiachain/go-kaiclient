@@ -9,7 +9,7 @@ import (
 )
 
 //var url = "https://rpc.kardiachain.io"
-var url = "https://kai-ecosystem-6.kardiachain.io"
+var url = "https://dev-1.kardiachain.io"
 
 func SetupNodeClient() (Node, error) {
 	lgr, err := zap.NewDevelopment()

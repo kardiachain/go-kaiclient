@@ -21,17 +21,19 @@ package kardia
 import (
 	"context"
 	"math/big"
-	"os"
-	"path"
-	"runtime"
+	"strings"
 
 	"github.com/kardiachain/go-kardia"
 	"github.com/kardiachain/go-kardia/lib/abi/bind"
+	"github.com/kardiachain/go-kardia/lib/event"
+	"github.com/kardiachain/go-kardia/types"
 	"go.uber.org/zap"
 
 	"github.com/kardiachain/go-kardia/lib/abi"
 	"github.com/kardiachain/go-kardia/lib/common"
 	"github.com/kardiachain/go-kardia/rpc"
+
+	"github.com/kardiachain/go-kaiclient/kardia/smc"
 )
 
 const (
@@ -66,6 +68,15 @@ type Node interface {
 	IDelegator
 	bind.ContractCaller
 	bind.ContractTransactor
+	bind.ContractBackend
+}
+
+func (n *node) FilterLogs(ctx context.Context, query kardia.FilterQuery) ([]types.Log, error) {
+	panic("implement me")
+}
+
+func (n *node) SubscribeFilterLogs(ctx context.Context, query kardia.FilterQuery, ch chan<- types.Log) (event.Subscription, error) {
+	panic("implement me")
 }
 
 type node struct {
@@ -91,7 +102,7 @@ func (n *node) PendingCodeAt(ctx context.Context, account common.Address) ([]byt
 }
 
 func (n *node) PendingNonceAt(ctx context.Context, account common.Address) (uint64, error) {
-	panic("implement me")
+	return n.NonceAt(ctx, account.String())
 }
 
 func (n *node) SuggestGasPrice(ctx context.Context) (uint64, error) {
@@ -128,17 +139,7 @@ func NewNode(url string, lgr *zap.Logger) (Node, error) {
 }
 
 func (n *node) setupSMC() error {
-	filePath := os.Getenv("ABI_PATH")
-	if filePath == "" {
-		_, filename, _, _ := runtime.Caller(1)
-		filePath = path.Dir(filename)
-	}
-
-	stakingABI, err := os.Open(path.Join(filePath, "../kardia/abi/staking.json"))
-	if err != nil {
-		panic("cannot read staking ABI file")
-	}
-	stakingSmcABI, err := abi.JSON(stakingABI)
+	stakingSmcABI, err := abi.JSON(strings.NewReader(smc.StakingABI))
 	if err != nil {
 		return err
 	}
@@ -147,11 +148,7 @@ func (n *node) setupSMC() error {
 		ContractAddress: common.HexToAddress(StakingContractAddr),
 	}
 	n.stakingSMC = stakingUtil
-	validatorABI, err := os.Open(path.Join(filePath, "../kardia/abi/validator.json"))
-	if err != nil {
-		return err
-	}
-	validatorSmcAbi, err := abi.JSON(validatorABI)
+	validatorSmcAbi, err := abi.JSON(strings.NewReader(smc.ValidatorABI))
 	if err != nil {
 		return err
 	}
@@ -163,11 +160,7 @@ func (n *node) setupSMC() error {
 	if err != nil {
 		return err
 	}
-	paramsABI, err := os.Open(path.Join(filePath, "../kardia/abi/params.json"))
-	if err != nil {
-		return err
-	}
-	paramsSmcAbi, err := abi.JSON(paramsABI)
+	paramsSmcAbi, err := abi.JSON(strings.NewReader(smc.ParamsABI))
 	if err != nil {
 		return err
 	}
@@ -217,4 +210,8 @@ func (n *node) KardiaCall(ctx context.Context, args SMCCallArgs) ([]byte, error)
 		return nil, err
 	}
 	return result, nil
+}
+
+func (n *node) DeployContract(ctx context.Context, auth *bind.TransactOpts, contract *BoundContract) {
+
 }
