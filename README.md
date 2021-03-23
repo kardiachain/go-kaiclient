@@ -1,5 +1,17 @@
-# KaiClient
+# Kardia Golang SDK
+
+This repo is under heavy update. Please use with your carefully.
+
+Usage example can be found in _test files.
+
+## Installation
+
+```shell
+go get github.com/kardiachain/go-kaiclient
+```
+
 ## Initializing
+
 ```go
 func SetupKAIClient() (*Client, context.Context, error) {
 ctx, _ := context.WithCancel(context.Background())
@@ -16,6 +28,7 @@ return nil, nil, fmt.Errorf("Failed to create new KaiClient: %v", err)
 return client, ctx, nil
 }
 ```
+
 ## Endpoints
 **LatestBlockNumber**
 ```go
@@ -69,12 +82,19 @@ NodesInfo(ctx context.Context) ([]*types.NodeInfo, error)
 ```go
 Datadir(ctx context.Context) (string, error)
 ```
+
 **Validator**
+
 ```go
-Validator(ctx context.Context, rpcURL string) (*types.Validator, error)
+Validator(ctx context.Context, rpcURL string) (*types.Validator, error) {}
 ```
+
 **Validators**
+
 ```go
 Validators(ctx context.Context) ([]*types.Validator, error)
 ```
+
 ## Benchmark result
+
+## Changelogs
