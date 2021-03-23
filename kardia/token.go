@@ -4,8 +4,12 @@ package kardia
 import (
 	"context"
 	"math/big"
+	"strings"
 
+	"github.com/kardiachain/go-kardia/lib/abi"
 	"github.com/kardiachain/go-kardia/lib/common"
+
+	"github.com/kardiachain/go-kaiclient/kardia/smc"
 )
 
 type token struct {
@@ -24,11 +28,23 @@ func (t *token) IsKRC20(ctx context.Context) bool {
 	return true
 }
 
-func NewToken(node Node, c *Contract) Token {
+func NewKRC20(node Node, address string, owner string) (Token, error) {
+	r := strings.NewReader(smc.KRC20ABI)
+	abiData, err := abi.JSON(r)
+	if err != nil {
+		return nil, err
+	}
+	c := &Contract{
+		Abi:             &abiData,
+		Bytecode:        smc.KRC20Bytecode,
+		ContractAddress: common.HexToAddress(address),
+		OwnerAddress:    common.HexToAddress(owner),
+	}
+
 	return &token{
 		node: node,
 		c:    c,
-	}
+	}, nil
 }
 
 type Token interface {
