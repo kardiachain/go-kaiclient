@@ -6,46 +6,13 @@ import (
 	"math/big"
 )
 
-type ContractValidator struct {
+// KRC20 contract basic info
+type KRC20 struct {
 	node Node
 	c    *Contract
 }
 
-func NewContractValidator(node Node, c *Contract) *ContractValidator {
-	return &ContractValidator{
-		node: node,
-		c:    c,
-	}
-}
-
-func (k *ContractValidator) IsKRC20(ctx context.Context) (bool, error) {
-	if _, err := k.getName(ctx); err != nil {
-		return false, err
-	}
-
-	if _, err := k.getSymbol(ctx); err != nil {
-		return false, err
-	}
-
-	if _, err := k.getDecimals(ctx); err != nil {
-		return false, err
-	}
-
-	if _, err := k.getTotalSupply(ctx); err != nil {
-		return false, err
-	}
-
-	if _, err := k.getOwnerBalance(ctx); err != nil {
-		return false, err
-	}
-	return true, nil
-}
-
-func (k *ContractValidator) IsKRC721() (bool, error) {
-	return false, nil
-}
-
-func (k *ContractValidator) getName(ctx context.Context) (string, error) {
+func (k *KRC20) getName(ctx context.Context) (string, error) {
 	payload, err := k.c.Abi.Pack("name")
 	if err != nil {
 		return "", err
@@ -65,7 +32,7 @@ func (k *ContractValidator) getName(ctx context.Context) (string, error) {
 
 }
 
-func (k *ContractValidator) getSymbol(ctx context.Context) (string, error) {
+func (k *KRC20) getSymbol(ctx context.Context) (string, error) {
 	payload, err := k.c.Abi.Pack("symbol")
 	if err != nil {
 		return "", err
@@ -83,7 +50,7 @@ func (k *ContractValidator) getSymbol(ctx context.Context) (string, error) {
 	return symbol, nil
 }
 
-func (k *ContractValidator) getDecimals(ctx context.Context) (uint8, error) {
+func (k *KRC20) getDecimals(ctx context.Context) (uint8, error) {
 	payload, err := k.c.Abi.Pack("decimals")
 	if err != nil {
 		return 0, err
@@ -101,7 +68,7 @@ func (k *ContractValidator) getDecimals(ctx context.Context) (uint8, error) {
 	return decimals, nil
 }
 
-func (k *ContractValidator) getTotalSupply(ctx context.Context) (*big.Int, error) {
+func (k *KRC20) getTotalSupply(ctx context.Context) (*big.Int, error) {
 	payload, err := k.c.Abi.Pack("totalSupply")
 	if err != nil {
 		return nil, err
@@ -119,7 +86,7 @@ func (k *ContractValidator) getTotalSupply(ctx context.Context) (*big.Int, error
 	return totalSupply, nil
 }
 
-func (k *ContractValidator) getOwnerBalance(ctx context.Context) (*big.Int, error) {
+func (k *KRC20) getOwnerBalance(ctx context.Context) (*big.Int, error) {
 	payload, err := k.c.Abi.Pack("balanceOf", k.c.OwnerAddress)
 	if err != nil {
 		return nil, err

@@ -14,8 +14,6 @@ import (
 type IContract interface {
 	StakingContact(ctx context.Context) *Contract
 	ValidatorContact(ctx context.Context) *Contract
-	KRC20Contract(ctx context.Context) *Contract
-	KRC721Contract(ctx context.Context) *Contract
 
 	//DecodeLog(ctx context.Context, smcABI *abi.ABI, log *Log) error
 	//EstimateGas(ctx context.Context) (uint64, error)
@@ -62,30 +60,6 @@ func (n *node) StakingContact(ctx context.Context) *Contract {
 }
 
 func (n *node) ValidatorContact(ctx context.Context) *Contract {
-	return n.validatorSMC
-}
-
-func (n *node) KRC20Contract(ctx context.Context) *Contract {
-	return n.validatorSMC
-}
-
-//
-//func (n *node) IsKRC20(ctx context.Context, c *Contract) (bool, error) {
-//	// Call basic information
-//	/*
-//		function name() external pure returns (string memory);
-//		function symbol() external pure returns (string memory);
-//		function decimals() external pure returns (uint8);
-//		function totalSupply() external view returns (uint);
-//	*/
-//
-//
-//	// Call balance of owner
-//	//function balanceOf(address owner) external view returns (uint);
-//	return true, nil
-//}
-
-func (n *node) KRC721Contract(ctx context.Context) *Contract {
 	return n.validatorSMC
 }
 

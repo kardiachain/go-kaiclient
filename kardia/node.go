@@ -43,28 +43,22 @@ const (
 type Node interface {
 	Url() string
 	IsAlive() bool
-	Info(ctx context.Context) (*NodeInfo, error)
+	NodeInfo(ctx context.Context) (*NodeInfo, error)
+	GetCirculatingSupply(ctx context.Context) (*big.Int, error)
+	KardiaCall(ctx context.Context, args SMCCallArgs) ([]byte, error)
 
 	IAddress
-
-	LatestBlockNumber(ctx context.Context) (uint64, error)
-	BlockByHash(ctx context.Context, hash string) (*Block, error)
-	BlockByHeight(ctx context.Context, height uint64) (*Block, error)
-	BlockHeaderByHash(ctx context.Context, hash string) (*Header, error)
-	BlockHeaderByNumber(ctx context.Context, number uint64) (*Header, error)
-
+	IBlock
 	IReceipt
 	IContract
 	IStaking
 	ITx
-
 	ISubscription
+	IToken
 
-	GetCirculatingSupply(ctx context.Context) (*big.Int, error)
-
-	KardiaCall(ctx context.Context, args SMCCallArgs) ([]byte, error)
 	IValidator
 	IDelegator
+
 	bind.ContractCaller
 	bind.ContractTransactor
 	bind.ContractBackend
@@ -197,7 +191,7 @@ func (n *node) IsAlive() bool {
 	return true
 }
 
-func (n *node) Info(ctx context.Context) (*NodeInfo, error) {
+func (n *node) NodeInfo(ctx context.Context) (*NodeInfo, error) {
 	var (
 		node  *NodeInfo
 		peers []*PeerInfo

@@ -246,3 +246,11 @@ type UnbondedRecord struct {
 	Balances        []*big.Int `json:"balances"`
 	CompletionTimes []*big.Int `json:"completionTimes"`
 }
+
+type Token struct {
+	Address     common.Address
+	Name        string
+	Symbol      string
+	Decimals    uint8
+	TotalSupply *big.Int
+}

@@ -7,6 +7,14 @@ import (
 	"github.com/kardiachain/go-kardia/lib/common"
 )
 
+type IBlock interface {
+	LatestBlockNumber(ctx context.Context) (uint64, error)
+	BlockByHash(ctx context.Context, hash string) (*Block, error)
+	BlockByHeight(ctx context.Context, height uint64) (*Block, error)
+	BlockHeaderByHash(ctx context.Context, hash string) (*Header, error)
+	BlockHeaderByNumber(ctx context.Context, number uint64) (*Header, error)
+}
+
 // BlockByHash returns the given full block.
 //
 // Use HeaderByHash if you don't need all transactions or uncle headers.
