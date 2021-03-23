@@ -3,6 +3,7 @@ package kardia
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"strings"
 
@@ -17,11 +18,11 @@ type token struct {
 	c    *Contract
 }
 
-func (t *token) IsKRC20(ctx context.Context) bool {
+func (t *token) isKRC20() bool {
 	if t.c.ContractAddress.Equal(common.Address{}) {
 		return false
 	}
-	if t, err := t.KRC20Info(ctx, t.c); err != nil || t == nil {
+	if t, err := t.KRC20Info(context.Background()); err != nil || t == nil {
 		return false
 	}
 
@@ -41,6 +42,14 @@ func NewKRC20(node Node, address string, owner string) (Token, error) {
 		OwnerAddress:    common.HexToAddress(owner),
 	}
 
+	t := &token{
+		node: node,
+		c:    c,
+	}
+	if !t.isKRC20() {
+		return nil, fmt.Errorf("not valid KRC20")
+	}
+
 	return &token{
 		node: node,
 		c:    c,
@@ -48,12 +57,11 @@ func NewKRC20(node Node, address string, owner string) (Token, error) {
 }
 
 type Token interface {
-	IsKRC20(ctx context.Context) bool
-	KRC20Info(ctx context.Context, c *Contract) (*KRC20, error)
+	KRC20Info(ctx context.Context) (*KRC20, error)
 	HolderBalance(ctx context.Context, c *Contract, holderAddress common.Address) (*big.Int, error)
 }
 
-func (t *token) KRC20Info(ctx context.Context, c *Contract) (*KRC20, error) {
+func (t *token) KRC20Info(ctx context.Context) (*KRC20, error) {
 	name, err := t.getName(ctx)
 	if err != nil {
 		return nil, err
