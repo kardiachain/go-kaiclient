@@ -172,8 +172,11 @@ func Test_ValidatorSets(t *testing.T) {
 	assert.Nil(t, err)
 
 	sets, err := node.ValidatorSets(ctx)
+	fmt.Println("Set length", len(sets))
 	assert.Nil(t, err)
-	fmt.Println("Set", sets)
+	for _, add := range sets {
+		fmt.Println("Address", add.String())
+	}
 }
 
 //SMCAddressOfValidator

@@ -53,8 +53,7 @@ type Node interface {
 	BlockHeaderByHash(ctx context.Context, hash string) (*Header, error)
 	BlockHeaderByNumber(ctx context.Context, number uint64) (*Header, error)
 
-	DecodeInputData(to string, input string) (*FunctionCall, error)
-
+	IReceipt
 	IContract
 	IStaking
 	ITx
@@ -90,6 +89,8 @@ type node struct {
 	stakingSMC   *Contract
 	validatorSMC *Contract
 	paramsSMC    *Contract
+	krc20SMC     *Contract
+	krc721SMC    *Contract
 }
 
 func (n *node) Url() string {
@@ -169,6 +170,25 @@ func (n *node) setupSMC() error {
 		ContractAddress: paramsSmcAddr,
 	}
 	n.paramsSMC = paramsUtil
+
+	krc20SmcABI, err := abi.JSON(strings.NewReader(smc.KRC20ABI))
+	if err != nil {
+		return err
+	}
+	krc20Util := &Contract{
+		Abi: &krc20SmcABI,
+	}
+	n.krc20SMC = krc20Util
+
+	//stakingSmcABI, err := abi.JSON(strings.NewReader(smc.StakingABI))
+	//if err != nil {
+	//	return err
+	//}
+	//stakingUtil := &Contract{
+	//	Abi:             &stakingSmcABI,
+	//	ContractAddress: common.HexToAddress(StakingContractAddr),
+	//}
+	//n.stakingSMC = stakingUtil
 
 	return nil
 }

@@ -42,16 +42,3 @@ func (c *BoundContract) DeployKRC20(auth *bind.TransactOpts) (common.Address, co
 	}
 	return address, tx.Hash(), nil
 }
-
-//
-//func (c *BoundContract) Deploy(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, common.Hash, error) {
-//	parsed, err := abi.JSON(strings.NewReader(smc.KRC20ABI))
-//	if err != nil {
-//		return common.Address{}, common.Hash{}, err
-//	}
-//	address, tx, _, err := bind.DeployContract(auth, parsed, common.FromHex(smc.KRC20Bytecode), backend)
-//	if err != nil {
-//		return common.Address{}, common.Hash{}, err
-//	}
-//	return address, tx.Hash(), nil
-//}
