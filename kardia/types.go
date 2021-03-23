@@ -247,7 +247,7 @@ type UnbondedRecord struct {
 	CompletionTimes []*big.Int `json:"completionTimes"`
 }
 
-type Token struct {
+type KRC20 struct {
 	Address     common.Address
 	Name        string
 	Symbol      string

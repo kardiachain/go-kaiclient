@@ -54,7 +54,6 @@ type Node interface {
 	IStaking
 	ITx
 	ISubscription
-	IToken
 
 	IValidator
 	IDelegator
