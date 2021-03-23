@@ -13,12 +13,26 @@ type token struct {
 	c    *Contract
 }
 
-func NewToken() {
+func (t *token) IsKRC20(ctx context.Context) bool {
+	if t.c.ContractAddress.Equal(common.Address{}) {
+		return false
+	}
+	if t, err := t.KRC20Info(ctx, t.c); err != nil || t == nil {
+		return false
+	}
 
+	return true
+}
+
+func NewToken(node Node, c *Contract) Token {
+	return &token{
+		node: node,
+		c:    c,
+	}
 }
 
 type Token interface {
-	IsKRC20() bool
+	IsKRC20(ctx context.Context) bool
 	KRC20Info(ctx context.Context, c *Contract) (*KRC20, error)
 	HolderBalance(ctx context.Context, c *Contract, holderAddress common.Address) (*big.Int, error)
 }
@@ -149,62 +163,4 @@ func (t *token) getOwnerBalance(ctx context.Context) (*big.Int, error) {
 	}
 
 	return balance, nil
-}
-
-type TokenValidator interface {
-	IsKRC20(ctx context.Context, c *Contract) bool
-	IsKRC721(ctx context.Context, c *Contract) bool
-}
-
-type tokenValidator struct {
-	node  Node
-	krc20 KRC20
-}
-
-func NewTokenValidator(node Node) *tokenValidator {
-	return &tokenValidator{
-		node: node,
-	}
-}
-
-//
-////IsKRC20 check if contract implement KRC20 interface
-////Current version is really simple
-//func (v *tokenValidator) IsKRC20(ctx context.Context, t Token) (bool, error) {
-//	if c.ContractAddress.Equal(common.Address{}) {
-//		return false, fmt.Errorf("contract address must not empty")
-//	}
-//
-//	if c.OwnerAddress.Equal(common.Address{}) {
-//		return false, fmt.Errorf("owner address must not empty")
-//	}
-//
-//	if c.Abi == nil {
-//		return false, fmt.Errorf("abi must not nil")
-//	}
-//
-//	if _, err := krc20.getName(ctx); err != nil {
-//		return false, nil
-//	}
-//
-//	if _, err := krc20.getSymbol(ctx); err != nil {
-//		return false, nil
-//	}
-//
-//	if _, err := krc20.getDecimals(ctx); err != nil {
-//		return false, nil
-//	}
-//
-//	if _, err := krc20.getTotalSupply(ctx); err != nil {
-//		return false, nil
-//	}
-//
-//	if _, err := krc20.getOwnerBalance(ctx); err != nil {
-//		return false, nil
-//	}
-//	return true, nil
-//}
-
-func (v *tokenValidator) IsKRC721() (bool, error) {
-	return false, nil
 }
