@@ -61,6 +61,9 @@ type Node interface {
 	bind.ContractCaller
 	bind.ContractTransactor
 	bind.ContractBackend
+
+	// For test/dev network only, please use with careful
+	DeployKRC20(auth *bind.TransactOpts) (common.Address, common.Hash, error)
 }
 
 func (n *node) FilterLogs(ctx context.Context, query kardia.FilterQuery) ([]types.Log, error) {

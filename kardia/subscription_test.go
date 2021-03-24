@@ -174,10 +174,7 @@ func TestSubscription_LogsFilterEvent(t *testing.T) {
 	//url := "ws://10.10.0.251:8550/ws"
 	node, err := NewNode(url, lgr)
 	assert.Nil(t, err)
-	//topic := []string{
-	//	"",
-	//	"",
-	//}
+
 	args := FilterArgs{Address: []string{"0x42d3400560F66A15F6D1345b894A854E5277270a"}}
 	logEventCh := make(chan *FilterLogs)
 	_, err = node.KaiSubscribe(context.Background(), logEventCh, "logs", args)

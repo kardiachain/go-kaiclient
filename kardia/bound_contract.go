@@ -31,12 +31,12 @@ func NewBoundContract(node Node, abi *abi.ABI, addr common.Address) *BoundContra
 	return c
 }
 
-func (c *BoundContract) DeployKRC20(auth *bind.TransactOpts) (common.Address, common.Hash, error) {
+func (n *node) DeployKRC20(auth *bind.TransactOpts) (common.Address, common.Hash, error) {
 	parsed, err := abi.JSON(strings.NewReader(smc.KRC20ABI))
 	if err != nil {
 		return common.Address{}, common.Hash{}, err
 	}
-	address, tx, _, err := bind.DeployContract(auth, parsed, common.FromHex(smc.KRC20Bytecode), c.node)
+	address, tx, _, err := bind.DeployContract(auth, parsed, common.FromHex(smc.KRC20Bytecode), n)
 	if err != nil {
 		return common.Address{}, common.Hash{}, err
 	}
