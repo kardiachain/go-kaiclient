@@ -170,12 +170,12 @@ func TestSubscription_LogsFilter3(t *testing.T) {
 func TestSubscription_LogsFilterEvent(t *testing.T) {
 	lgr, err := zap.NewDevelopment()
 	assert.Nil(t, err)
-	url := "wss://ws-dev.kardiachain.io/ws"
-	//url := "ws://10.10.0.251:8550/ws"
+	//url := "wss://ws-dev.kardiachain.io/ws"
+	url := "ws://10.10.0.251:8550/ws"
 	node, err := NewNode(url, lgr)
 	assert.Nil(t, err)
 
-	args := FilterArgs{Address: []string{"0x42d3400560F66A15F6D1345b894A854E5277270a"}}
+	args := FilterArgs{Address: []string{"0xe6D4dB026810ad0b405a1e48E8DfFF2509Bc6b0A", "0x50a26DF56fC91eECF7f25D52eFB4eFAB56Dacf08", "0x16B10970D6712D1D87aA18B9770b0Abd969dC079"}}
 	logEventCh := make(chan *FilterLogs)
 	_, err = node.KaiSubscribe(context.Background(), logEventCh, "logs", args)
 	assert.Nil(t, err, "cannot subscribe")
@@ -193,5 +193,4 @@ func TestSubscription_LogsFilterEvent(t *testing.T) {
 	//sub, err := node.SubscribeNewHead(context.Background(), headers)
 	//assert.Nil(t, err)
 	//
-
 }

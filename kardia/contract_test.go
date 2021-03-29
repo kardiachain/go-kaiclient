@@ -589,21 +589,3 @@ func TestDecode(t *testing.T) {
 	}
 
 }
-
-func TestKRC20(t *testing.T) {
-	ctx := context.Background()
-	node, err := SetupNodeClient()
-	assert.Nil(t, err)
-	txHash := "0x330879ef1cf1bf5cb18205f218f3c1c80d5f2dece8edfc3222dc50b129b136f9"
-	tx, err := node.GetTransaction(ctx, txHash)
-	assert.Nil(t, err)
-	receipt, err := node.GetTransactionReceipt(ctx, txHash)
-	assert.Nil(t, err)
-	fmt.Printf("Input data: %+v \n", tx)
-	for _, l := range receipt.Logs {
-		fmt.Printf("Address: %s \n", l.Address)
-		fmt.Printf("Logs: %+v \n", l)
-
-	}
-
-}

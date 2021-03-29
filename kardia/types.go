@@ -145,15 +145,19 @@ type FunctionCall struct {
 }
 
 type Log struct {
-	Address     string   `json:"address"`
-	Topics      []string `json:"topics"`
-	Data        string   `json:"data"`
-	BlockHeight uint64   `json:"blockHeight"`
-	TxHash      string   `json:"transactionHash"`
-	TxIndex     uint     `json:"transactionIndex"`
-	BlockHash   string   `json:"blockHash"`
-	Index       uint     `json:"logIndex"`
-	Removed     bool     `json:"removed"`
+	Address       string                 `json:"address,omitempty" bson:"address"`
+	MethodName    string                 `json:"methodName,omitempty" bson:"methodName"`
+	ArgumentsName string                 `json:"argumentsName,omitempty" bson:"argumentsName"`
+	Arguments     map[string]interface{} `json:"arguments,omitempty" bson:"arguments"`
+	Topics        []string               `json:"topics,omitempty" bson:"topics"`
+	Data          string                 `json:"data,omitempty" bson:"data"`
+	BlockHeight   uint64                 `json:"blockHeight,omitempty" bson:"blockHeight"`
+	Time          time.Time              `json:"time" bson:"time"`
+	TxHash        string                 `json:"transactionHash"  bson:"transactionHash"`
+	TxIndex       uint                   `json:"transactionIndex,omitempty" bson:"transactionIndex"`
+	BlockHash     string                 `json:"blockHash,omitempty" bson:"blockHash"`
+	Index         uint                   `json:"logIndex,omitempty" bson:"logIndex"`
+	Removed       bool                   `json:"removed,omitempty" bson:"removed"`
 }
 
 type Header struct {

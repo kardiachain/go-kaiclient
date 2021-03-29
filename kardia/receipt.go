@@ -3,6 +3,7 @@ package kardia
 
 import (
 	"encoding/hex"
+	"strconv"
 	"strings"
 
 	"github.com/kardiachain/go-kardia/lib/abi"
@@ -11,6 +12,7 @@ import (
 
 type IReceipt interface {
 	DecodeInputData(to string, input string) (*FunctionCall, error)
+	DecodeWithABI(to string, input string, a *abi.ABI) (*FunctionCall, error)
 }
 
 //IsKRC20
@@ -72,6 +74,37 @@ func (n *node) DecodeInputData(to string, input string) (*FunctionCall, error) {
 	}, nil
 }
 
+func (n *node) UnpackLog(l Log, a *abi.ABI) (*Log, error) {
+	log := l // Clone
+	event, err := a.EventByID(common.HexToHash(log.Topics[0]))
+	if err != nil {
+		return nil, err
+	}
+	argumentsValue := make(map[string]interface{})
+	err = unpackLogIntoMap(a, argumentsValue, event.RawName, log)
+	if err != nil {
+		return nil, err
+	}
+	// convert address, bytes and string arguments into their hex representations
+	for i, arg := range argumentsValue {
+		//argumentsValue[i] = parseBytesArrayIntoString(arg)
+		argumentsValue[i] = arg
+	}
+	// append unpacked data
+	log.Arguments = argumentsValue
+	log.MethodName = event.RawName
+	order := int64(1)
+	for _, arg := range event.Inputs {
+		if arg.Indexed {
+			log.ArgumentsName += "index_topic_" + strconv.FormatInt(order, 10) + " "
+			order++
+		}
+		log.ArgumentsName += arg.Type.String() + " " + arg.Name + ", "
+	}
+	log.ArgumentsName = strings.TrimRight(log.ArgumentsName, ", ")
+	return &log, nil
+}
+
 func (n *node) DecodeWithABI(to string, input string, a *abi.ABI) (*FunctionCall, error) {
 	// return nil if input data is too short
 	if len(input) <= 2 {
@@ -125,4 +158,30 @@ func (n *node) DecodeWithABI(to string, input string, a *abi.ABI) (*FunctionCall
 		MethodName: method.Name,
 		Arguments:  arguments,
 	}, nil
+}
+
+// UnpackLogIntoMap unpacks a retrieved log into the provided map.
+func unpackLogIntoMap(a *abi.ABI, out map[string]interface{}, eventName string, log Log) error {
+	data, err := hex.DecodeString(log.Data)
+	if err != nil {
+		return err
+	}
+	// unpacking un-indexed arguments
+	if len(data) > 0 {
+		if err := a.UnpackIntoMap(out, eventName, data); err != nil {
+			return err
+		}
+	}
+	// unpacking indexed arguments
+	var indexed abi.Arguments
+	for _, arg := range a.Events[eventName].Inputs {
+		if arg.Indexed {
+			indexed = append(indexed, arg)
+		}
+	}
+	topics := make([]common.Hash, len(log.Topics)-1)
+	for i, topic := range log.Topics[1:] { // exclude the eventID (log.Topic[0])
+		topics[i] = common.HexToHash(topic)
+	}
+	return abi.ParseTopicsIntoMap(out, indexed, topics)
 }
