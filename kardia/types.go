@@ -131,7 +131,7 @@ type Receipt struct {
 	GasUsed           uint64      `json:"gasUsed"`
 	CumulativeGasUsed uint64      `json:"cumulativeGasUsed"`
 	ContractAddress   string      `json:"contractAddress"`
-	Logs              []Log       `json:"logs"`
+	Logs              []*Log      `json:"logs"`
 	LogsBloom         types.Bloom `json:"logsBloom"`
 	Root              string      `json:"root"`
 	Status            uint        `json:"status"`

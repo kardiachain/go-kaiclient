@@ -21,23 +21,44 @@ type IContract interface {
 
 // parseBytesArrayIntoString is a utility function. It converts address, bytes and string arguments into their hex representation.
 func parseBytesArrayIntoString(v interface{}) interface{} {
-	if reflect.TypeOf(v).Kind() == reflect.Array {
-		arr := v.([32]byte)
-		slice := arr[:]
-		// convert any array of uint8 into a hex string
-		if reflect.TypeOf(slice).Elem().Kind() == reflect.Uint8 {
-			return common.Bytes(slice).String()
-		} else {
-			// otherwise recursively check other arguments
-			return parseBytesArrayIntoString(v)
+	vType := reflect.TypeOf(v).Kind()
+	fmt.Println("VType", vType)
+	switch vType {
+	case reflect.Array:
+		//common.Address{}
+		addr, ok := v.(common.Address)
+		if ok {
+			return common.Bytes(addr[:]).String()
 		}
-	} else if reflect.TypeOf(v).Kind() == reflect.Ptr {
-		// convert big.Int to string to avoid overflowing
+
+		hash, ok := v.([32]byte)
+		if ok {
+			return common.Bytes(hash[:]).String()
+		}
+		return v
+	case reflect.Ptr:
 		if value, ok := v.(*big.Int); ok {
 			return value.String()
 		}
+	default:
+		return v
 	}
 	return v
+	//if  == reflect.Array {
+	//
+	//	slice := arr[:]
+	//	// convert any array of uint8 into a hex string
+	//	if reflect.TypeOf(slice).Elem().Kind() == reflect.Uint8 {
+	//		return common.Bytes(slice).String()
+	//	} else {
+	//		// otherwise recursively check other arguments
+	//		return parseBytesArrayIntoString(v)
+	//	}
+	//} else if reflect.TypeOf(v).Kind() == reflect.Ptr {
+	//	// convert big.Int to string to avoid overflowing
+	//
+	//}
+	//return v
 }
 
 // getInputArguments get input arguments of a contract call
