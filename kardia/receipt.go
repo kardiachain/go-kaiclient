@@ -78,7 +78,7 @@ func UnpackLog(log *Log, smcABI *abi.ABI) (*Log, error) {
 	if strings.HasPrefix(log.Data, "0x") {
 		log.Data = log.Data[2:]
 	}
-
+	log.Address = CheckAddress(log.Address)
 	event, err := smcABI.EventByID(common.HexToHash(log.Topics[0]))
 	if err != nil {
 		return nil, err

@@ -131,3 +131,7 @@ func getInputArguments(a *abi.ABI, name string, data []byte) (abi.Arguments, err
 	}
 	return args, nil
 }
+
+func CheckAddress(address string) string {
+	return common.HexToAddress(address).String()
+}
