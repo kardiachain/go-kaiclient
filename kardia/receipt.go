@@ -3,7 +3,6 @@ package kardia
 
 import (
 	"encoding/hex"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -76,6 +75,10 @@ func (n *node) DecodeInputData(to string, input string) (*FunctionCall, error) {
 }
 
 func UnpackLog(log *Log, smcABI *abi.ABI) (*Log, error) {
+	if strings.HasPrefix(log.Data, "0x") {
+		log.Data = log.Data[2:]
+	}
+
 	event, err := smcABI.EventByID(common.HexToHash(log.Topics[0]))
 	if err != nil {
 		return nil, err
@@ -87,8 +90,6 @@ func UnpackLog(log *Log, smcABI *abi.ABI) (*Log, error) {
 	}
 	//convert address, bytes and string arguments into their hex representations
 	for i, arg := range argumentsValue {
-		fmt.Println("i", i)
-		fmt.Println("arg", arg)
 		argumentsValue[i] = parseBytesArrayIntoString(arg)
 	}
 	// append unpacked data
@@ -124,6 +125,11 @@ func unpackLogIntoMap(a *abi.ABI, out map[string]interface{}, eventName string, 
 		if arg.Indexed {
 			indexed = append(indexed, arg)
 		}
+	}
+
+	topicSize := len(log.Topics)
+	if topicSize <= 1 {
+		return nil
 	}
 	topics := make([]common.Hash, len(log.Topics)-1)
 	for i, topic := range log.Topics[1:] { // exclude the eventID (log.Topic[0])

@@ -1865,7 +1865,7 @@ func TestDecodePairWithABI(t *testing.T) {
 	ctx := context.Background()
 	node, err := setupTestNode()
 	assert.Nil(t, err)
-	txHash := "0x3226aea7f4d6652b719c05c898251fac9bdc63fe05688f0c3d3ae8a4443491e1"
+	txHash := "0xfe1acfcdd3f28562c557bb29a47a190ae6dce3fdc4c94a1f482a77f2c1addb45"
 
 	r := bytes.NewReader([]byte(PairABI))
 	pairABI, err := abi.JSON(r)
@@ -1874,24 +1874,26 @@ func TestDecodePairWithABI(t *testing.T) {
 	receipt, err := node.GetTransactionReceipt(ctx, txHash)
 	assert.Nil(t, err)
 	for _, l := range receipt.Logs {
-		if l.Address == "0x892833766Bf7A219708ce64B2d7613cce43b16C6" {
+		fmt.Printf("BeforeLog: %+v \n", l)
+		if l.Address == "0x0f0524Aa6c70d8B773189C0a6aeF3B01719b0b47" {
 			l, err = UnpackLog(l, &pairABI)
 			assert.Nil(t, err)
-			if l.MethodName == "Swap" {
-				// If amount0.In != 0 >> sell
-				// if amount0.Out != 0 >> buy
-				fmt.Printf("Logs:%+v\n", l)
-				in := amountToFloat(l.Arguments["amount0Out"].(string), 18)
-				out := amountToFloat(l.Arguments["amount1In"].(string), 18)
-				//out, _ := new(big.Int).SetString(, 10)
-				fmt.Println("Rate", in/out)
-
-				//fmt.Println("Amount1 In", )
-				//fmt.Println("Amount1 Out",l.Arguments["amount0Out"])
-
-				//fmt.Println("Amount1 Out", new(big.Int).SetString(string(l.Arguments["amount0Out"]), 10))
-
-			}
+			fmt.Printf("Log: %+v \n", l)
+			//if l.MethodName == "Swap" {
+			//	// If amount0.In != 0 >> sell
+			//	// if amount0.Out != 0 >> buy
+			//	fmt.Printf("Logs:%+v\n", l)
+			//	in := amountToFloat(l.Arguments["amount0Out"].(string), 18)
+			//	out := amountToFloat(l.Arguments["amount1In"].(string), 18)
+			//	//out, _ := new(big.Int).SetString(, 10)
+			//	fmt.Println("Rate", in/out)
+			//
+			//	//fmt.Println("Amount1 In", )
+			//	//fmt.Println("Amount1 Out",l.Arguments["amount0Out"])
+			//
+			//	//fmt.Println("Amount1 Out", new(big.Int).SetString(string(l.Arguments["amount0Out"]), 10))
+			//
+			//}
 
 		}
 	}

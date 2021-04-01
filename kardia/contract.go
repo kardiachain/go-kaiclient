@@ -22,7 +22,6 @@ type IContract interface {
 // parseBytesArrayIntoString is a utility function. It converts address, bytes and string arguments into their hex representation.
 func parseBytesArrayIntoString(v interface{}) interface{} {
 	vType := reflect.TypeOf(v).Kind()
-	fmt.Println("VType", vType)
 	switch vType {
 	case reflect.Array:
 		//common.Address{}
