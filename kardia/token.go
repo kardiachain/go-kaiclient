@@ -13,6 +13,11 @@ import (
 	"github.com/kardiachain/go-kaiclient/kardia/smc"
 )
 
+type Token interface {
+	KRC20Info(ctx context.Context) (*KRC20, error)
+	HolderBalance(ctx context.Context, holderAddress string) (*big.Int, error)
+}
+
 type token struct {
 	node Node
 	c    *Contract
@@ -56,11 +61,6 @@ func NewKRC20(node Node, address string, owner string) (Token, error) {
 	}, nil
 }
 
-type Token interface {
-	KRC20Info(ctx context.Context) (*KRC20, error)
-	HolderBalance(ctx context.Context, holderAddress common.Address) (*big.Int, error)
-}
-
 func (t *token) KRC20Info(ctx context.Context) (*KRC20, error) {
 	name, err := t.getName(ctx)
 	if err != nil {
@@ -92,8 +92,9 @@ func (t *token) KRC20Info(ctx context.Context) (*KRC20, error) {
 	return krc20, nil
 }
 
-func (t *token) HolderBalance(ctx context.Context, holderAddress common.Address) (*big.Int, error) {
-	payload, err := t.c.Abi.Pack("balanceOf", holderAddress)
+func (t *token) HolderBalance(ctx context.Context, holderAddress string) (*big.Int, error) {
+	address := common.HexToAddress(holderAddress)
+	payload, err := t.c.Abi.Pack("balanceOf", address)
 	if err != nil {
 		return nil, err
 	}
