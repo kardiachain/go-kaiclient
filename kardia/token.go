@@ -58,7 +58,7 @@ func NewKRC20(node Node, address string, owner string) (Token, error) {
 
 type Token interface {
 	KRC20Info(ctx context.Context) (*KRC20, error)
-	HolderBalance(ctx context.Context, c *Contract, holderAddress common.Address) (*big.Int, error)
+	HolderBalance(ctx context.Context, holderAddress common.Address) (*big.Int, error)
 }
 
 func (t *token) KRC20Info(ctx context.Context) (*KRC20, error) {
@@ -92,8 +92,24 @@ func (t *token) KRC20Info(ctx context.Context) (*KRC20, error) {
 	return krc20, nil
 }
 
-func (t *token) HolderBalance(ctx context.Context, c *Contract, holderAddress common.Address) (*big.Int, error) {
-	return nil, nil
+func (t *token) HolderBalance(ctx context.Context, holderAddress common.Address) (*big.Int, error) {
+	payload, err := t.c.Abi.Pack("balanceOf", holderAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := t.node.KardiaCall(ctx, ConstructCallArgs(t.c.ContractAddress.Hex(), payload))
+	if err != nil {
+		return nil, err
+	}
+
+	var balance *big.Int
+	// unpack result
+	err = t.c.Abi.UnpackIntoInterface(&balance, "balanceOf", res)
+	if err != nil {
+		return nil, err
+	}
+	return balance, nil
 }
 
 func (t *token) getName(ctx context.Context) (string, error) {
