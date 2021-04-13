@@ -115,34 +115,7 @@ func TestValidator_List(t *testing.T) {
 		assert.Nil(t, err)
 		fmt.Println("Delegators size", len(delegatorAddresses))
 
-		//signInfo, err := node.SigningInfo(ctx, smcAddr.Hex())
-		//assert.Nil(t, err)
-		//fmt.Println("SignInfo", signInfo)
-
-		//delegatorAddresses, err := node.DelegatorAddresses(ctx, smcAddr.Hex())
-		//assert.Nil(t, err)
-		//for _, addr := range delegatorAddresses {
-		//	if addr.Equal(validator.Signer) {
-		//		// Get self delegated info
-		//		stakedAmount, err := node.DelegatorStakedAmount(ctx, smcAddr.Hex(), addr.Hex())
-		//		assert.Nil(t, err)
-		//		fmt.Println("Self-staked", stakedAmount.String())
-		//	}
-		//}
 	}
-}
-
-func loadValidatorInfo() {
-
-}
-
-func calculateStats(t *testing.T) {
-	ctx := context.Background()
-	node, err := setupTestNodeInterface()
-	assert.Nil(t, err)
-	totalStaked, err := node.TotalStakedAmount(ctx)
-	assert.Nil(t, err)
-	fmt.Println("Total staked", totalStaked.String())
 }
 
 func Test_GetValidatorsOfDelegator(t *testing.T) {
@@ -161,8 +134,6 @@ func Test_ValidatorSets(t *testing.T) {
 		fmt.Println("Address", add.String())
 	}
 }
-
-//SMCAddressOfValidator
 
 func Test_SMCAddressOfValidator(t *testing.T) {
 	ctx := context.Background()
