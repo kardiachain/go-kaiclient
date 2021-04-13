@@ -174,7 +174,7 @@ if err != nil {
 
 ---
 
-### Subscribe event
+### Subscribe NewHeader event
 
 ```go
 func TestSubscription_NewBlockHead(t *testing.T) {
@@ -199,6 +199,37 @@ func TestSubscription_NewBlockHead(t *testing.T) {
 	}
 }
 
+```
+
+### Subscribe log filters
+
+More filters args can be found
+at [Kardia RPC API](https://github.com/kardiachain/go-kardia/wiki/Kardia-JSON-RPC-API#kai_newFilter)
+
+```go
+node, err := NewNode("wss://ws-dev.kardiachain.io", zap.L())
+if err != nil {
+    return err
+}
+smcAddress := "0x0f0524Aa6c70d8B773189C0a6aeF3B01719b0b47"
+args := kardia.FilterArgs{
+    Address: []string{smcAddress},
+}
+logEventCh := make(chan *Log)
+sub, err := node.KaiSubscribe(context.Background(), logEventCh, "logs", args)
+if err != nil {
+    return err
+}
+
+for {
+    select {
+    case err := <-sub.Err():
+        lgr.Debug("subscribe err", zap.Error(err))
+    case log := <-logEventCh:
+        logger.Debug("Log", zap.Any("detail", log))
+        // Process event
+    }
+}
 ```
 
 ## Benchmark result
