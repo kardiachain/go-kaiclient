@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 KardiaChain
+ *  Copyright 2020 KardiaChain
  *  This file is part of the go-kardia library.
  *
  *  The go-kardia library is free software: you can redistribute it and/or modify
@@ -175,16 +175,6 @@ func (n *node) setupSMC() error {
 		Abi: &krc20SmcABI,
 	}
 	n.krc20SMC = krc20Util
-
-	//stakingSmcABI, err := abi.JSON(strings.NewReader(smc.StakingABI))
-	//if err != nil {
-	//	return err
-	//}
-	//stakingUtil := &Contract{
-	//	Abi:             &stakingSmcABI,
-	//	ContractAddress: common.HexToAddress(StakingContractAddr),
-	//}
-	//n.stakingSMC = stakingUtil
 
 	return nil
 }

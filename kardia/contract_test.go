@@ -1,3 +1,20 @@
+/*
+ *  Copyright 2020 KardiaChain
+ *  This file is part of the go-kardia library.
+ *
+ *  The go-kardia library is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  The go-kardia library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public License
+ *  along with the go-kardia library. If not, see <http://www.gnu.org/licenses/>.
+ */
 // Package kardia
 package kardia
 
@@ -227,7 +244,7 @@ var (
 )
 
 func TestSMC_AddSpin(t *testing.T) {
-	node, err := SetupNodeClient()
+	node, err := setupTestNodeInterface()
 	assert.Nil(t, err)
 	r := strings.NewReader(wheelABI)
 	abiData, err := abi.JSON(r)
@@ -235,7 +252,7 @@ func TestSMC_AddSpin(t *testing.T) {
 
 	smc := NewBoundContract(node, &abiData, common.HexToAddress(WheelSMCAddr))
 
-	pubKey, privateKey, err := SetupTestAccount()
+	pubKey, privateKey, err := setupTestAccount()
 	assert.Nil(t, err)
 	fromAddress := crypto.PubkeyToAddress(*pubKey)
 	// Now we can read the nonce that we should use for the account's transaction.
@@ -258,7 +275,7 @@ func TestSMC_AddSpin(t *testing.T) {
 }
 
 func BenchmarkWheelSpin(b *testing.B) {
-	node, err := SetupNodeClient()
+	node, err := setupTestNodeInterface()
 	assert.Nil(b, err)
 	r := strings.NewReader(wheelABI)
 	abiData, err := abi.JSON(r)
@@ -269,7 +286,7 @@ func BenchmarkWheelSpin(b *testing.B) {
 	// run the Fib function b.N times
 	fmt.Println("TotalRun", b.N)
 	for n := 0; n < b.N; n++ {
-		pubKey, privateKey, err := SetupTestAccount()
+		pubKey, privateKey, err := setupTestAccount()
 		assert.Nil(b, err)
 		fromAddress := crypto.PubkeyToAddress(*pubKey)
 		// Now we can read the nonce that we should use for the account's transaction.
@@ -305,7 +322,7 @@ func TestFullFlow(t *testing.T) {
 
 func FullFlow() error {
 	ctx := context.Background()
-	node, err := SetupNodeClient()
+	node, err := setupTestNodeInterface()
 	if err != nil {
 		return err
 	}
@@ -314,7 +331,7 @@ func FullFlow() error {
 	if err != nil {
 		return err
 	}
-	pubKey, privateKey, err := SetupTestAccount()
+	pubKey, privateKey, err := setupTestAccount()
 	if err != nil {
 		return err
 	}
@@ -397,7 +414,7 @@ func Spin(ctx context.Context, node Node, smc *BoundContract, addr common.Addres
 }
 
 func TestSMC_WheelSpin(t *testing.T) {
-	node, err := SetupNodeClient()
+	node, err := setupTestNodeInterface()
 	assert.Nil(t, err)
 	r := strings.NewReader(wheelABI)
 	abiData, err := abi.JSON(r)
@@ -405,7 +422,7 @@ func TestSMC_WheelSpin(t *testing.T) {
 
 	smc := NewBoundContract(node, &abiData, common.HexToAddress(WheelSMCAddr))
 
-	pubKey, privateKey, err := SetupTestAccount()
+	pubKey, privateKey, err := setupTestAccount()
 	assert.Nil(t, err)
 	fromAddress := crypto.PubkeyToAddress(*pubKey)
 	// Now we can read the nonce that we should use for the account's transaction.
@@ -448,7 +465,7 @@ func TotalReward(ctx context.Context, node Node, smc *BoundContract, fromAddr co
 func TestSMC_WheelReward(t *testing.T) {
 	ctx := context.Background()
 
-	node, err := SetupNodeClient()
+	node, err := setupTestNodeInterface()
 	assert.Nil(t, err)
 	r := strings.NewReader(wheelABI)
 	abiData, err := abi.JSON(r)

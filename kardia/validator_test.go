@@ -8,14 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kardiachain/go-kardia/rpc"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 func TestNode_SubscribeStakingEvent(t *testing.T) {
 	ctx := context.Background()
-	node, err := SetupWSNodeClient()
+	node, err := setupWSNodeClient()
 	assert.Nil(t, err)
 	ch := make(chan interface{})
 
@@ -41,23 +39,8 @@ func TestNode_SubscribeStakingEvent(t *testing.T) {
 	}
 }
 
-func setupTestNode() (*node, error) {
-	rpcClient, err := rpc.Dial(url)
-	if err != nil {
-		return nil, err
-	}
-	node := &node{
-		client: rpcClient,
-		lgr:    zap.L(),
-	}
-	if err := node.setupSMC(); err != nil {
-		return nil, err
-	}
-	return node, nil
-}
-
 func BenchmarkValidators_List(b *testing.B) {
-	n, err := setupTestNode()
+	n, err := setupTestNodeInstance()
 	if err != nil {
 		return
 	}
@@ -67,7 +50,7 @@ func BenchmarkValidators_List(b *testing.B) {
 }
 
 func BenchmarkValidator_CommissionRate(b *testing.B) {
-	n, err := setupTestNode()
+	n, err := setupTestNodeInstance()
 	if err != nil {
 		return
 	}
@@ -82,7 +65,7 @@ func BenchmarkValidator_CommissionRate(b *testing.B) {
 
 func TestValidator_Details(t *testing.T) {
 	ctx := context.Background()
-	node, err := SetupNodeClient()
+	node, err := setupTestNodeInterface()
 	assert.Nil(t, err)
 	hodler := "0x4dAe614b2eA2FaeeDDE7830A2e7fcEDdAE9f9161"
 	v, err := node.ValidatorInfo(ctx, hodler)
@@ -93,7 +76,7 @@ func TestValidator_Details(t *testing.T) {
 
 func TestValidator_GetDelegation(t *testing.T) {
 	ctx := context.Background()
-	node, err := SetupNodeClient()
+	node, err := setupTestNodeInterface()
 	assert.Nil(t, err)
 
 	vSMC := "0xdC4A94805f449A64B27B589233C49d87eE99fBBc"
@@ -109,7 +92,7 @@ func TestValidator_GetDelegation(t *testing.T) {
 
 func TestValidator_List(t *testing.T) {
 	ctx := context.Background()
-	node, err := SetupNodeClient()
+	node, err := setupTestNodeInterface()
 	assert.Nil(t, err)
 
 	totalStakedAmount, err := node.TotalStakedAmount(ctx)
@@ -155,7 +138,7 @@ func loadValidatorInfo() {
 
 func calculateStats(t *testing.T) {
 	ctx := context.Background()
-	node, err := SetupNodeClient()
+	node, err := setupTestNodeInterface()
 	assert.Nil(t, err)
 	totalStaked, err := node.TotalStakedAmount(ctx)
 	assert.Nil(t, err)
@@ -168,7 +151,7 @@ func Test_GetValidatorsOfDelegator(t *testing.T) {
 
 func Test_ValidatorSets(t *testing.T) {
 	ctx := context.Background()
-	node, err := SetupNodeClient()
+	node, err := setupTestNodeInterface()
 	assert.Nil(t, err)
 
 	sets, err := node.ValidatorSets(ctx)
@@ -183,7 +166,7 @@ func Test_ValidatorSets(t *testing.T) {
 
 func Test_SMCAddressOfValidator(t *testing.T) {
 	ctx := context.Background()
-	node, err := SetupNodeClient()
+	node, err := setupTestNodeInterface()
 	assert.Nil(t, err)
 
 	sets, err := node.SMCAddressOfValidator(ctx, "0x5CdF7E0bBF0C53b5f4e612Fa66f0E60169e3a006")
@@ -193,7 +176,7 @@ func Test_SMCAddressOfValidator(t *testing.T) {
 
 func Test_ValidatorAddressOfSMC(t *testing.T) {
 	ctx := context.Background()
-	node, err := SetupNodeClient()
+	node, err := setupTestNodeInterface()
 	assert.Nil(t, err)
 
 	sets, err := node.ValidatorAddressOfSMC(ctx, "0x50a26DF56fC91eECF7f25D52eFB4eFAB56Dacf08")

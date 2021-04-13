@@ -1,15 +1,30 @@
+/*
+ *  Copyright 2020 KardiaChain
+ *  This file is part of the go-kardia library.
+ *
+ *  The go-kardia library is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  The go-kardia library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public License
+ *  along with the go-kardia library. If not, see <http://www.gnu.org/licenses/>.
+ */
 // Package kardia
 package kardia
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"log"
 	"testing"
 	"time"
 
-	"github.com/kardiachain/go-kardia/lib/abi"
 	"github.com/kardiachain/go-kardia/rpc"
 	"github.com/kardiachain/go-kardia/types"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +32,7 @@ import (
 )
 
 func TestSubscription_NewBlockHead(t *testing.T) {
-	lgr, err := zap.NewDevelopment()
+	lgr, err := zap.NewProduction()
 	assert.Nil(t, err)
 	url := "wss://ws-dev.kardiachain.io/ws"
 
@@ -28,22 +43,14 @@ func TestSubscription_NewBlockHead(t *testing.T) {
 	sub, err := node.SubscribeNewHead(context.Background(), headersCh)
 	assert.Nil(t, err, "cannot subscribe")
 
-	////rpcClient, err := rpc.Dial("ws://10.10.0.68:8546/ws")
-	//rpcClient, err := rpc.Dial("ws://10.10.loo0.251:8550/ws")
-	//assert.Nil(t, err, "cannot connect") //NewHeads
-	//sub, err := rpcClient.Subscribe(context.Background(), "kai", headersCh, "newHeads")
-
 	for {
 		select {
 		case err := <-sub.Err():
 			log.Fatal(err)
 		case header := <-headersCh:
-			fmt.Println(header.Hash().Hex()) // 0xbc10defa8dda384c96a17640d84de5578804945d347072e091b4e5f390ddea7f
+			fmt.Println(header.Hash().Hex())
 		}
 	}
-	//sub, err := node.SubscribeNewHead(context.Background(), headers)
-	//assert.Nil(t, err)
-	//
 }
 
 func subscribe(n Node, channel interface{}) (*rpc.ClientSubscription, error) {
@@ -167,40 +174,4 @@ func TestSubscription_LogsFilter3(t *testing.T) {
 		}
 	}
 
-}
-
-func TestSubscription_LogsFilterEvent(t *testing.T) {
-	lgr, err := zap.NewDevelopment()
-	assert.Nil(t, err)
-	//url := "wss://ws-dev.kardiachain.io/ws"
-	url := "ws://10.10.0.251:8550/ws"
-	node, err := NewNode(url, lgr)
-	assert.Nil(t, err)
-
-	args := FilterArgs{Address: []string{"0x0f0524Aa6c70d8B773189C0a6aeF3B01719b0b47", "0xA37888A6FF1B0A5347D8355DE05A044F2981a959", "0x0059DC83f10E32eB653C77942C821ca1Be7D89bB", "0xF742b790f36A4FB2DCbE1795573a0F574fc69F32", "0x2d5407B96950B99d3b67a2364DE6590F02BEBde5", "0xeA80f362fe37616b5922E40A5F6f912045D5e47c", "0xB643f79b5b9eb20A8a7CC93721b83B041E1c6048", "0x034F0B3C54bF9430344E2afC80C71F6A79f11a9B", "0x0FeBeC85D9279097c893BfF7929C95aF8A334121", "0x4C4980B121810B6fa4bc7cAE195609414a4fd213"}}
-	logEventCh := make(chan *Log)
-	_, err = node.KaiSubscribe(context.Background(), logEventCh, "logs", args)
-	assert.Nil(t, err, "cannot subscribe")
-
-	////rpcClient, err := rpc.Dial("ws://10.10.0.68:8546/ws")
-	//rpcClient, err := rpc.Dial("ws://10.10.loo0.251:8550/ws")
-	//assert.Nil(t, err, "cannot connect") //NewHeads
-	r := bytes.NewReader([]byte(PairABI))
-	pairSMCABI, err := abi.JSON(r)
-	if err != nil {
-		return
-	}
-	for {
-		select {
-		case logEvent := <-logEventCh:
-			fmt.Printf("Events: %+v \n", logEvent)
-			logEvent.Data = logEvent.Data[2:]
-			lDetails, err := UnpackLog(logEvent, &pairSMCABI)
-			if err != nil {
-				fmt.Println("Cannot unpack ", err.Error())
-				return
-			}
-			fmt.Printf("Log Details: %+v \n", lDetails)
-		}
-	}
 }

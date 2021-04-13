@@ -104,8 +104,6 @@ func (n *node) GetCirculatingSupply(ctx context.Context) (*big.Int, error) {
 	return result.TotalSupply, nil
 }
 
-//
-//
 //func (n *node) GetValidatorsByDelegator(ctx context.Context, delAddr common.Address) ([]*ValidatorsByDelegator, error) {
 //	// construct input data
 //	payload, err := n.stakingSMC.Abi.Pack("getValidatorsByDelegator", delAddr)

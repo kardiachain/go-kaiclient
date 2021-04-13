@@ -1,3 +1,20 @@
+/*
+ *  Copyright 2020 KardiaChain
+ *  This file is part of the go-kardia library.
+ *
+ *  The go-kardia library is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Lesser General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  The go-kardia library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public License
+ *  along with the go-kardia library. If not, see <http://www.gnu.org/licenses/>.
+ */
 // Package kardia
 package kardia
 
@@ -43,21 +60,6 @@ func parseBytesArrayIntoString(v interface{}) interface{} {
 		return v
 	}
 	return v
-	//if  == reflect.Array {
-	//
-	//	slice := arr[:]
-	//	// convert any array of uint8 into a hex string
-	//	if reflect.TypeOf(slice).Elem().Kind() == reflect.Uint8 {
-	//		return common.Bytes(slice).String()
-	//	} else {
-	//		// otherwise recursively check other arguments
-	//		return parseBytesArrayIntoString(v)
-	//	}
-	//} else if reflect.TypeOf(v).Kind() == reflect.Ptr {
-	//	// convert big.Int to string to avoid overflowing
-	//
-	//}
-	//return v
 }
 
 // getInputArguments get input arguments of a contract call
