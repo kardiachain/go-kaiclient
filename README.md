@@ -86,6 +86,12 @@ _Note:_ Examples can be found at *_test.go
 
 ---
 
+### Create wallet
+
+```go
+
+```
+
 ### Interact with SMC
 
 Function definition

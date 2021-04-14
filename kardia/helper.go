@@ -152,3 +152,18 @@ func getInputArguments(a *abi.ABI, name string, data []byte) (abi.Arguments, err
 func CheckAddress(address string) string {
 	return common.HexToAddress(address).String()
 }
+
+func GenerateWallet() (common.Address, ecdsa.PrivateKey, error) {
+	privKey, err := crypto.GenerateKey()
+	if err != nil {
+		return common.Address{}, ecdsa.PrivateKey{}, err
+	}
+	publicKey := privKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		return common.Address{}, ecdsa.PrivateKey{}, fmt.Errorf("error casting public key to ECDSA")
+	}
+	address := crypto.PubkeyToAddress(*publicKeyECDSA)
+
+	return address, *privKey, nil
+}

@@ -17,3 +17,21 @@
  */
 // Package kardia
 package kardia
+
+import (
+	"fmt"
+	"testing"
+
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/kardiachain/go-kardia/lib/crypto"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestGenerateNewWallet(t *testing.T) {
+	address, privKey, err := GenerateWallet()
+	assert.Nil(t, err)
+	privateKeyBytes := crypto.FromECDSA(&privKey)
+	privateKeyStr := hexutil.Encode(privateKeyBytes)
+	fmt.Println("WalletAddress", address.Hex())
+	fmt.Println("WalletPrivateKey", privateKeyStr)
+}
