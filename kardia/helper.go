@@ -33,6 +33,7 @@ import (
 	"github.com/kardiachain/go-kardia/lib/crypto"
 	"github.com/kardiachain/go-kardia/rpc"
 	"github.com/kardiachain/go-kardia/types"
+	"github.com/shopspring/decimal"
 )
 
 func getParamsSMCAddress(stakingSMC *Contract, client *rpc.Client) (common.Address, error) {
@@ -166,4 +167,8 @@ func GenerateWallet() (common.Address, ecdsa.PrivateKey, error) {
 	address := crypto.PubkeyToAddress(*publicKeyECDSA)
 
 	return address, *privKey, nil
+}
+
+func FloatToBigInt(amount float64, decimals int32) *big.Int {
+	return decimal.NewFromFloat(amount).Mul(decimal.New(1, decimals)).BigInt()
 }

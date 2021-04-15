@@ -20,6 +20,7 @@ package kardia
 
 import (
 	"fmt"
+	"math/big"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -34,4 +35,11 @@ func TestGenerateNewWallet(t *testing.T) {
 	privateKeyStr := hexutil.Encode(privateKeyBytes)
 	fmt.Println("WalletAddress", address.Hex())
 	fmt.Println("WalletPrivateKey", privateKeyStr)
+}
+
+func TestFloatToBigInt(t *testing.T) {
+	amount := FloatToBigInt(0.2, 18)
+	expectedAmount, _ := new(big.Int).SetString("200000000000000000", 10)
+	assert.Equal(t, expectedAmount, amount)
+
 }
