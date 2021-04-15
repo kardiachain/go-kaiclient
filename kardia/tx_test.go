@@ -14,7 +14,6 @@ import (
 )
 
 func TestSendSignedTx(t *testing.T) {
-	//
 	receivedAddress := common.HexToAddress("0x59173FAF22C3fEd212Ec6B5Ea2E50f7644b614f3")
 	pubKey, privKey, err := setupTestAccount()
 	assert.Nil(t, err)

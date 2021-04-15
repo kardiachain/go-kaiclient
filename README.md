@@ -89,6 +89,52 @@ _Note:_ Examples can be found at *_test.go
 ### Create wallet
 
 ```go
+func Test() {
+    address, privKey, err := GenerateWallet()
+    fmt.Println("WalletAddress", address.Hex())
+    fmt.Println("WalletPrivateKey", privateKeyStr)
+}
+```
+
+### Send SignedTx
+
+```go
+
+func SendSignedTx() {
+	receivedAddress := common.HexToAddress("0x59173FAF22C3fEd212Ec6B5Ea2E50f7644b614f3")
+	privateKey, err := crypto.HexToECDSA("63e16b5334e76d63ee94f35bd2a81c721ebbbb27e81620be6fc1c448c767eed9")
+	if err != nil {
+	    return
+	}
+
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		return
+	}
+	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+
+	node, err := setupTestNodeInterface()
+	assert.Nil(t, err)
+	nonce, err := node.NonceAt(context.Background(), fromAddress.String())
+	assert.Nil(t, err)
+	balance, err := node.Balance(context.Background(), fromAddress.String())
+	assert.Nil(t, err)
+	gasLimit := uint64(29000)
+	gasPrice := big.NewInt(1)
+	// Send 1 KAI to from test account to receivedAddress
+	var Hydro = big.NewInt(1000000000000000000) // 18 decimals
+	oneKai := new(big.Int).Mul(new(big.Int).SetInt64(1), Hydro)
+
+	//nonce uint64, to common.Address, amount *big.Int, gasLimit uint64, gasPrice *big.Int, data []byte
+	tx := types.NewTransaction(nonce, receivedAddress, oneKai, gasLimit, gasPrice, nil)
+	signedTx, err := types.SignTx(types.HomesteadSigner{}, tx, privateKey)
+	assert.Nil(t, err)
+
+	err = node.SendTransaction(context.Background(), signedTx)
+	assert.Nil(t, err)
+	fmt.Printf("tx sent: %s", signedTx.Hash().Hex())
+}
 
 ```
 
