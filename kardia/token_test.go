@@ -66,7 +66,7 @@ func TestKRC20_Transfer(t *testing.T) {
 	assert.Nil(t, err)
 	fmt.Println("Balance", balance)
 	gasLimit := uint64(3100000)
-	gasPrice := big.NewInt(10000000000)
+	gasPrice := big.NewInt(1000000000)
 	auth := NewKeyedTransactor(privateKey)
 	auth.Nonce = nonce
 	auth.Value = big.NewInt(0) // in wei
