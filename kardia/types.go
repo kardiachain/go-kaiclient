@@ -275,3 +275,8 @@ type KRC20 struct {
 	Decimals    uint8
 	TotalSupply *big.Int
 }
+
+type DelegatorWithShare struct {
+	Address common.Address
+	Share   *big.Int
+}

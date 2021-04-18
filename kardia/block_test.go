@@ -20,6 +20,7 @@ package kardia
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -38,7 +39,8 @@ func TestBlock_BlockByHash(t *testing.T) {
 	ctx := context.Background()
 	node, err := setupTestNodeInterface()
 	assert.Nil(t, err)
-	b, err := node.BlockByHash(ctx, "0xeb250a3b4efcca94ba29ae9fb5d39b90369bd1d2688e4b8b75fffa11357f3821")
+	b, err := node.BlockByHash(ctx, "0x5f47a97ac4d8454312430b48f1841af0e839a8fc9f7fc6c00efadb89ea3e2133")
 	assert.Nil(t, err)
-	assert.Equal(t, "0xeb250a3b4efcca94ba29ae9fb5d39b90369bd1d2688e4b8b75fffa11357f3821", b.Hash)
+	fmt.Println("Block", b)
+	assert.Equal(t, "0x5f47a97ac4d8454312430b48f1841af0e839a8fc9f7fc6c00efadb89ea3e2133", b.Hash)
 }

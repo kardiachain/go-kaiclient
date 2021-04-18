@@ -32,6 +32,7 @@ type IValidator interface {
 	ValidatorInfo(ctx context.Context, validatorSMCAddress string) (*Validator, error)
 	SigningInfo(ctx context.Context, validatorSMCAddress string) (*SigningInfo, error)
 	DelegatorAddresses(ctx context.Context, validatorSMCAddress string) ([]common.Address, error)
+	DelegatorsWithShare(ctx context.Context, validatorSMCAddress string) ([]*DelegatorWithShare, error)
 	DelegationRewards(ctx context.Context, validatorSMCAddr, delegatorAddress string) (*big.Int, error)
 	DelegatorStakedAmount(ctx context.Context, validatorSMCAddress, delegatorAddress string) (*big.Int, error)
 	ValidatorCommission(ctx context.Context, valSmcAddr string) (*Commission, error)
@@ -221,6 +222,35 @@ func (n *node) DelegatorAddresses(ctx context.Context, validatorSMCAddress strin
 		return nil, err
 	}
 	return result.Addresses, nil
+}
+
+func (n *node) DelegatorsWithShare(ctx context.Context, validatorSMCAddress string) ([]*DelegatorWithShare, error) {
+	payload, err := n.validatorSMC.Abi.Pack("getDelegations")
+	if err != nil {
+		return nil, err
+	}
+	res, err := n.KardiaCall(ctx, ConstructCallArgs(validatorSMCAddress, payload))
+	if err != nil {
+		return nil, err
+	}
+
+	var result struct {
+		Addresses []common.Address
+		Shares    []*big.Int
+	}
+	// unpack result
+	err = n.validatorSMC.Abi.UnpackIntoInterface(&result, "getDelegations", res)
+	if err != nil {
+		n.lgr.Error("Error unpacking delegation details", zap.Error(err))
+		return nil, err
+	}
+	var delegatorsWithShare []*DelegatorWithShare
+	for id := range result.Addresses {
+		delegatorsWithShare = append(delegatorsWithShare,
+			&DelegatorWithShare{Address: result.Addresses[id], Share: result.Shares[id]},
+		)
+	}
+	return delegatorsWithShare, nil
 }
 
 // getSlashEventsSize returns number of slash events of this validator

@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/kardiachain/go-kardia/lib/abi"
+	"github.com/kardiachain/go-kardia/lib/abi/bind"
 	"github.com/kardiachain/go-kardia/lib/common"
 
 	"github.com/kardiachain/go-kaiclient/kardia/smc"
@@ -33,6 +34,7 @@ import (
 type Token interface {
 	KRC20Info(ctx context.Context) (*KRC20, error)
 	HolderBalance(ctx context.Context, holderAddress string) (*big.Int, error)
+	Transfer(ctx context.Context, auth *bind.TransactOpts, to common.Address, amount *big.Int) (string, error)
 }
 
 type token struct {
@@ -221,4 +223,14 @@ func (t *token) getOwnerBalance(ctx context.Context) (*big.Int, error) {
 	}
 
 	return balance, nil
+}
+
+func (t *token) Transfer(ctx context.Context, auth *bind.TransactOpts, to common.Address, amount *big.Int) (string, error) {
+	bc := NewBoundContract(t.node, t.c.Abi, t.c.ContractAddress)
+	tx, err := bc.Transact(auth, "transfer", to, amount)
+	if err != nil {
+		return "", err
+	}
+
+	return tx.Hash().String(), nil
 }

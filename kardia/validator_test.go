@@ -154,3 +154,15 @@ func Test_ValidatorAddressOfSMC(t *testing.T) {
 	assert.Nil(t, err)
 	fmt.Println("Set", sets)
 }
+
+func TestValidator_DelegatorsWithShare(t *testing.T) {
+	ctx := context.Background()
+	node, err := setupTestNodeInterface()
+	assert.Nil(t, err)
+
+	sets, err := node.DelegatorsWithShare(ctx, "0x7D776FEcB1Ecb439aEb1324096f8bd1e6BCd5C03")
+	assert.Nil(t, err)
+	for _, s := range sets {
+		fmt.Printf("Addresss: %s | Share: %s \n", s.Address.String(), s.Share.String())
+	}
+}

@@ -26,7 +26,7 @@ import (
 )
 
 type Filter interface {
-	Events(log Log) ([]*Event, error)
+	Events(log *Log) ([]*Event, error)
 }
 
 type filter struct {
@@ -45,7 +45,7 @@ func NewFilter(events []string, abi *abi.ABI) (Filter, error) {
 	return filter, nil
 }
 
-func (f *filter) Events(log Log) ([]*Event, error) {
+func (f *filter) Events(log *Log) ([]*Event, error) {
 	var events []*Event
 	for _, t := range log.Topics {
 		nEvent, err := f.abi.EventByID(common.HexToHash(t))
@@ -56,7 +56,8 @@ func (f *filter) Events(log Log) ([]*Event, error) {
 		if !found || !sub {
 			continue
 		}
-		data, err := hex.DecodeString(log.Data)
+		// Network return log.Data with `0x` prefix
+		data, err := hex.DecodeString(log.Data[2:])
 		if err != nil {
 			return nil, err
 		}
