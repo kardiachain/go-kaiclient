@@ -26,8 +26,8 @@ func TestSendSignedTx(t *testing.T) {
 	balance, err := node.Balance(context.Background(), fromAddress.String())
 	assert.Nil(t, err)
 	fmt.Println("Balance", balance)
-	gasLimit := uint64(29000)
-	gasPrice := big.NewInt(1)
+	gasLimit := uint64(3100000)
+	gasPrice := big.NewInt(1000000000)
 	// Send 1 KAI to from test account to receivedAddress
 	var Hydro = big.NewInt(1000000000000000000)
 	oneKai := new(big.Int).Mul(new(big.Int).SetInt64(1), Hydro)
