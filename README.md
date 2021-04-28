@@ -232,7 +232,7 @@ if err != nil {
 func TestSubscription_NewBlockHead(t *testing.T) {
 	lgr, err := zap.NewProduction()
 	assert.Nil(t, err)
-	url := "wss://ws-dev.kardiachain.io/ws"
+	url := "wss://ws-dev.kardiachain.io"
 
 	node, err := NewNode(url, lgr)
 	assert.Nil(t, err)

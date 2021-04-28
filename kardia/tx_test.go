@@ -41,3 +41,11 @@ func TestSendSignedTx(t *testing.T) {
 	assert.Nil(t, err)
 	fmt.Printf("tx sent: %s", signedTx.Hash().Hex())
 }
+
+func TestTx(t *testing.T) {
+	n, err := setupTestNodeInstance()
+	assert.Nil(t, err)
+	tx, err := n.GetTransaction(context.Background(), "0x48bc30dc48af02cf8c39ae744230f4d0725467587c72e5f8f8a53e3113e62e32")
+	assert.Nil(t, err)
+	fmt.Printf("tx: %+v \n", tx)
+}
