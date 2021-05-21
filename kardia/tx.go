@@ -42,7 +42,7 @@ func (n *node) GetTransaction(ctx context.Context, hash string) (*Transaction, e
 	if err != nil {
 		return nil, err
 	} else if raw == nil {
-		return nil, kardia.NotFound
+		return nil, kardia.ErrNotFound
 	}
 	return raw, nil
 }
@@ -54,7 +54,7 @@ func (n *node) GetTransactionReceipt(ctx context.Context, txHash string) (*Recei
 	err := n.client.CallContext(ctx, &r, "tx_getTransactionReceipt", common.HexToHash(txHash))
 	if err == nil {
 		if r == nil {
-			return nil, kardia.NotFound
+			return nil, kardia.ErrNotFound
 		}
 	}
 	return r, err

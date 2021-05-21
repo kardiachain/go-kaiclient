@@ -42,15 +42,14 @@ func TestBoundContract_Deploy(t *testing.T) {
 	balance, err := node.Balance(context.Background(), fromAddress.String())
 	assert.Nil(t, err)
 	fmt.Println("Balance", balance)
-	gasLimit := uint64(30000000)
-	gasPrice := big.NewInt(1)
+	gasLimit := uint64(3100000)
+	gasPrice := big.NewInt(1000000000)
 	auth := NewKeyedTransactor(privateKey)
 	auth.Nonce = nonce
 	auth.Value = big.NewInt(0) // in wei
 	auth.GasLimit = gasLimit   // in units
 	auth.GasPrice = gasPrice
 
-	//bc := NewBoundContract(node, &abiData, common.HexToAddress(WheelSMCAddr))
 	smcAddress, txHash, err := node.DeployKRC20(auth)
 	assert.Nil(t, err)
 	fmt.Println("SMC Addr", smcAddress.String())

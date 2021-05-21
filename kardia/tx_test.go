@@ -45,7 +45,7 @@ func TestSendSignedTx(t *testing.T) {
 func TestTx(t *testing.T) {
 	n, err := setupTestNodeInstance()
 	assert.Nil(t, err)
-	tx, err := n.GetTransaction(context.Background(), "0x48bc30dc48af02cf8c39ae744230f4d0725467587c72e5f8f8a53e3113e62e32")
+	tx, err := n.GetTransaction(context.Background(), "0x7bd6b412dcce2de672a3932f4d0b92a3fad639b1f475be846f7c5302e8d555e4")
 	assert.Nil(t, err)
 	fmt.Printf("tx: %+v \n", tx)
 }
