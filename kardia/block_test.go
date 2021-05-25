@@ -44,3 +44,13 @@ func TestBlock_BlockByHash(t *testing.T) {
 	fmt.Println("Block", b)
 	assert.Equal(t, "0x5f47a97ac4d8454312430b48f1841af0e839a8fc9f7fc6c00efadb89ea3e2133", b.Hash)
 }
+
+func TestBlock_FullHeaderByNumber(t *testing.T) {
+	ctx := context.Background()
+	node, err := setupTestNodeInterface()
+	assert.Nil(t, err)
+	b, err := node.FullHeaderByNumber(ctx, 4)
+	assert.Nil(t, err)
+	fmt.Printf("Block %+v\n", b.Header)
+	//assert.Equal(t, "0x5f47a97ac4d8454312430b48f1841af0e839a8fc9f7fc6c00efadb89ea3e2133", b.Hash)
+}

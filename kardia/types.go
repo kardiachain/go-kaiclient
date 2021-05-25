@@ -178,24 +178,25 @@ type Log struct {
 }
 
 type Header struct {
-	Hash              string    `json:"hash"`
-	Height            uint64    `json:"height"`
-	LastBlock         string    `json:"lastBlock"`
-	CommitHash        string    `json:"commitHash"`
-	Time              time.Time `json:"time"`
-	NumTxs            uint64    `json:"numTxs"`
-	GasUsed           uint64    `json:"gasUsed"`
-	GasLimit          uint64    `json:"gasLimit"`
-	Rewards           string    `json:"Rewards"`
-	ProposerAddress   string    `json:"proposerAddress"`
-	TxHash            string    `json:"dataHash"`     // transactions
-	ReceiptHash       string    `json:"receiptsRoot"` // receipt root
-	Bloom             string    `json:"logsBloom"`
-	ValidatorsHash    string    `json:"validatorHash"`     // current block validators hash
-	NextValidatorHash string    `json:"nextValidatorHash"` // next block validators hash
-	ConsensusHash     string    `json:"consensusHash"`     // current consensus hash
-	AppHash           string    `json:"appHash"`           // state of transactions
-	EvidenceHash      string    `json:"evidenceHash"`      // hash of evidence
+	Hash              string         `json:"hash"`
+	Height            uint64         `json:"height"`
+	LastBlock         string         `json:"lastBlock"`
+	LastBlockID       *types.BlockID `json:"lastBlockID"`
+	CommitHash        string         `json:"commitHash"`
+	Time              time.Time      `json:"time"`
+	NumTxs            uint64         `json:"numTxs"`
+	GasUsed           uint64         `json:"gasUsed"`
+	GasLimit          uint64         `json:"gasLimit"`
+	Rewards           string         `json:"Rewards"`
+	ProposerAddress   string         `json:"proposerAddress"`
+	TxHash            string         `json:"dataHash"`     // transactions
+	ReceiptHash       string         `json:"receiptsRoot"` // receipt root
+	Bloom             *types.Bloom   `json:"logsBloom"`
+	ValidatorsHash    string         `json:"validatorHash"`     // current block validators hash
+	NextValidatorHash string         `json:"nextValidatorHash"` // next block validators hash
+	ConsensusHash     string         `json:"consensusHash"`     // current consensus hash
+	AppHash           string         `json:"appHash"`           // state of transactions
+	EvidenceHash      string         `json:"evidenceHash"`      // hash of evidence
 }
 
 type NodeInfo struct {
@@ -243,7 +244,7 @@ type FilterLogs struct {
 	Data             string   `json:"data"`
 	LogIndex         int64    `json:"logIndex"`
 	Removed          bool     `json:"removed"`
-	Topic            []string `json:"topic"`
+	Topics           []string `json:"topics"`
 	TransactionHash  string   `json:"transactionHash"`
 	TransactionIndex int64    `json:"transactionIndex"`
 }
