@@ -115,7 +115,7 @@ func (n *node) GetProof(ctx context.Context, address common.Address, storageKeys
 }
 
 type FullHeader struct {
-	Header       *Header
+	Header       *types.Header
 	Commit       *types.Commit
 	ValidatorSet *types.ValidatorSet
 }
@@ -135,7 +135,21 @@ func (n *node) FullHeaderByNumber(ctx context.Context, height uint64) (*FullHead
 		return nil, err
 	}
 	return &FullHeader{
-		Header:       header,
+		Header: &types.Header{
+			Height:             header.Height,
+			Time:               header.Time,
+			NumTxs:             header.NumTxs,
+			GasLimit:           header.GasLimit,
+			LastBlockID:        *header.LastBlockID,
+			ProposerAddress:    common.HexToAddress(header.ProposerAddress),
+			LastCommitHash:     common.HexToHash(header.CommitHash),
+			TxHash:             common.HexToHash(header.TxHash),
+			ValidatorsHash:     common.HexToHash(header.ValidatorsHash),
+			NextValidatorsHash: common.HexToHash(header.NextValidatorHash),
+			ConsensusHash:      common.HexToHash(header.ConsensusHash),
+			AppHash:            common.HexToHash(header.AppHash),
+			EvidenceHash:       common.HexToHash(header.EvidenceHash),
+		},
 		ValidatorSet: validators,
 		Commit:       commit,
 	}, nil
