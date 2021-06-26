@@ -20,21 +20,17 @@ package kardia
 
 import (
 	"context"
-	"fmt"
 	"math/big"
-	"strings"
-
-	"github.com/kardiachain/go-kardia/lib/abi"
-	"github.com/kardiachain/go-kardia/lib/abi/bind"
-	"github.com/kardiachain/go-kardia/lib/common"
 
 	"github.com/kardiachain/go-kaiclient/kardia/smc"
+	"github.com/kardiachain/go-kardia/lib/common"
 )
 
 type Token interface {
-	KRC20Info(ctx context.Context) (*KRC20, error)
+	KRC20Info(ctx context.Context) (bool, *KRC20)
+	KRC721Info(ctx context.Context) (bool, *KRC721)
 	HolderBalance(ctx context.Context, holderAddress string) (*big.Int, error)
-	Transfer(ctx context.Context, auth *bind.TransactOpts, to common.Address, amount *big.Int) (string, error)
+	TotalSupply(ctx context.Context) (*big.Int, error)
 }
 
 type token struct {
@@ -42,63 +38,60 @@ type token struct {
 	c    *Contract
 }
 
-func (t *token) isKRC20() bool {
-	if t.c.ContractAddress.Equal(common.Address{}) {
-		return false
-	}
-	if t, err := t.KRC20Info(context.Background()); err != nil || t == nil {
-		return false
-	}
-
-	return true
-}
-
-func NewKRC20(node Node, address string, owner string) (Token, error) {
-	r := strings.NewReader(smc.KRC20ABI)
-	abiData, err := abi.JSON(r)
-	if err != nil {
-		return nil, err
-	}
+func NewToken(node Node, address string) (Token, error) {
 	c := &Contract{
-		Abi:             &abiData,
 		Bytecode:        smc.KRC20Bytecode,
 		ContractAddress: common.HexToAddress(address),
-		OwnerAddress:    common.HexToAddress(owner),
 	}
-
-	t := &token{
-		node: node,
-		c:    c,
-	}
-	if !t.isKRC20() {
-		return nil, fmt.Errorf("not valid KRC20")
-	}
-
 	return &token{
 		node: node,
 		c:    c,
 	}, nil
 }
 
-func (t *token) KRC20Info(ctx context.Context) (*KRC20, error) {
+func (t *token) KRC721Info(ctx context.Context) (bool, *KRC721) {
 	name, err := t.getName(ctx)
 	if err != nil {
-		return nil, err
+		return false, nil
 	}
 
 	symbol, err := t.getSymbol(ctx)
 	if err != nil {
-		return nil, err
-	}
-
-	decimals, err := t.getDecimals(ctx)
-	if err != nil {
-		return nil, err
+		return false, nil
 	}
 
 	totalSupply, err := t.getTotalSupply(ctx)
 	if err != nil {
-		return nil, err
+		return false, nil
+	}
+	krc721 := &KRC721{
+		Address:     t.c.ContractAddress,
+		Name:        name,
+		Symbol:      symbol,
+		TotalSupply: totalSupply,
+	}
+	return true, krc721
+}
+
+func (t *token) KRC20Info(ctx context.Context) (bool, *KRC20) {
+	name, err := t.getName(ctx)
+	if err != nil {
+		return false, nil
+	}
+
+	symbol, err := t.getSymbol(ctx)
+	if err != nil {
+		return false, nil
+	}
+
+	decimals, err := t.getDecimals(ctx)
+	if err != nil {
+		return false, nil
+	}
+
+	totalSupply, err := t.getTotalSupply(ctx)
+	if err != nil {
+		return false, nil
 	}
 
 	krc20 := &KRC20{
@@ -108,7 +101,7 @@ func (t *token) KRC20Info(ctx context.Context) (*KRC20, error) {
 		Decimals:    decimals,
 		TotalSupply: totalSupply,
 	}
-	return krc20, nil
+	return true, krc20
 }
 
 func (t *token) HolderBalance(ctx context.Context, holderAddress string) (*big.Int, error) {
@@ -130,6 +123,10 @@ func (t *token) HolderBalance(ctx context.Context, holderAddress string) (*big.I
 		return nil, err
 	}
 	return balance, nil
+}
+
+func (t *token) TotalSupply(ctx context.Context) (*big.Int, error) {
+	return t.getTotalSupply(ctx)
 }
 
 func (t *token) getName(ctx context.Context) (string, error) {
@@ -223,14 +220,4 @@ func (t *token) getOwnerBalance(ctx context.Context) (*big.Int, error) {
 	}
 
 	return balance, nil
-}
-
-func (t *token) Transfer(ctx context.Context, auth *bind.TransactOpts, to common.Address, amount *big.Int) (string, error) {
-	bc := NewBoundContract(t.node, t.c.Abi, t.c.ContractAddress)
-	tx, err := bc.Transact(auth, "transfer", to, amount)
-	if err != nil {
-		return "", err
-	}
-
-	return tx.Hash().String(), nil
 }

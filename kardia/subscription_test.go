@@ -341,6 +341,31 @@ func TestSubscription_LogsFilter_Pump(t *testing.T) {
 	}
 }
 
+func TestApproveFADO(t *testing.T) {
+	var node Node
+	fadoSMCAddr := ``
+	stakerAddr := ``
+	stakingSMCAddress := ``
+	gasLimit = new(big.Int).SetInt64(39999999)
+	gasPrice = new(big.Int).SetInt64(1000000000)
+	stakeAmount, _ := new(big.Int).SetString(`100s000000000000000000`, 10) // 100 FADO
+	var privKey *ecdsa.PrivateKey
+	ctx := context.Background()
+
+	var stakeABI *abi.ABI
+	payload, err := stakeABI.Pack("approve", stakingSMCAddress, stakeAmount)
+	assert.Nil(t, err)
+
+	nonce, err := node.NonceAt(ctx, stakerAddr)
+	approveTx := types.NewTransaction(nonce, common.HexToAddress(fadoSMCAddr), new(big.Int).SetInt64(0), gasLimit.Uint64(), gasPrice, payload)
+	signedTx, err := types.SignTx(types.HomesteadSigner{}, approveTx, privKey)
+	if err != nil {
+		fmt.Printf("@@@@@@@@@@@@@@@@@@ SignTx error %v\n", err)
+	}
+
+	assert.Nil(t, node.SendTransaction(context.Background(), signedTx))
+}
+
 func recursiveCall(node Node, smc Contract) {
 	payload, err := smc.Abi.Pack("StressTestEvents", new(big.Int).SetInt64(20))
 	if err != nil {

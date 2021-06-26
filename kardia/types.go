@@ -269,6 +269,11 @@ type UnbondedRecord struct {
 	CompletionTimes []*big.Int `json:"completionTimes"`
 }
 
+type DelegatorWithShare struct {
+	Address common.Address
+	Share   *big.Int
+}
+
 type KRC20 struct {
 	Address     common.Address
 	Name        string
@@ -277,7 +282,9 @@ type KRC20 struct {
 	TotalSupply *big.Int
 }
 
-type DelegatorWithShare struct {
-	Address common.Address
-	Share   *big.Int
+type KRC721 struct {
+	Address     common.Address
+	Name        string
+	Symbol      string
+	TotalSupply *big.Int
 }
