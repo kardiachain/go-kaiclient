@@ -68,6 +68,11 @@ func (t *token) KRCType(ctx context.Context) int {
 }
 
 func (t *token) KRC721Info(ctx context.Context) (*KRC721, error) {
+	krc721ABI, err := KRC721ABI()
+	if err != nil {
+		return nil, err
+	}
+	t.c.Abi = krc721ABI
 	name, err := t.getName(ctx)
 	if err != nil {
 		return nil, err
@@ -92,6 +97,11 @@ func (t *token) KRC721Info(ctx context.Context) (*KRC721, error) {
 }
 
 func (t *token) KRC20Info(ctx context.Context) (*KRC20, error) {
+	krc20ABI, err := KRC20ABI()
+	if err != nil {
+		return nil, err
+	}
+	t.c.Abi = krc20ABI
 	name, err := t.getName(ctx)
 	if err != nil {
 		return nil, err
