@@ -26,9 +26,16 @@ import (
 	"github.com/kardiachain/go-kardia/lib/common"
 )
 
+const (
+	TokenTypeUnknown = 0
+	TokenTypeKRC20   = 1
+	TokenTypeKRC721  = 2
+)
+
 type Token interface {
-	KRC20Info(ctx context.Context) (bool, *KRC20)
-	KRC721Info(ctx context.Context) (bool, *KRC721)
+	KRCType(ctx context.Context) int
+	KRC20Info(ctx context.Context) (*KRC20, error)
+	KRC721Info(ctx context.Context) (*KRC721, error)
 	HolderBalance(ctx context.Context, holderAddress string) (*big.Int, error)
 	TotalSupply(ctx context.Context) (*big.Int, error)
 }
@@ -49,20 +56,31 @@ func NewToken(node Node, address string) (Token, error) {
 	}, nil
 }
 
-func (t *token) KRC721Info(ctx context.Context) (bool, *KRC721) {
+func (t *token) KRCType(ctx context.Context) int {
+	if krc20Info, err := t.KRC20Info(ctx); err == nil && krc20Info != nil {
+		return TokenTypeKRC20
+	}
+	if krc721Info, err := t.KRC721Info(ctx); err == nil && krc721Info != nil {
+		return TokenTypeKRC20
+	}
+
+	return TokenTypeUnknown
+}
+
+func (t *token) KRC721Info(ctx context.Context) (*KRC721, error) {
 	name, err := t.getName(ctx)
 	if err != nil {
-		return false, nil
+		return nil, err
 	}
 
 	symbol, err := t.getSymbol(ctx)
 	if err != nil {
-		return false, nil
+		return nil, err
 	}
 
 	totalSupply, err := t.getTotalSupply(ctx)
 	if err != nil {
-		return false, nil
+		return nil, err
 	}
 	krc721 := &KRC721{
 		Address:     t.c.ContractAddress,
@@ -70,28 +88,28 @@ func (t *token) KRC721Info(ctx context.Context) (bool, *KRC721) {
 		Symbol:      symbol,
 		TotalSupply: totalSupply,
 	}
-	return true, krc721
+	return krc721, nil
 }
 
-func (t *token) KRC20Info(ctx context.Context) (bool, *KRC20) {
+func (t *token) KRC20Info(ctx context.Context) (*KRC20, error) {
 	name, err := t.getName(ctx)
 	if err != nil {
-		return false, nil
+		return nil, err
 	}
 
 	symbol, err := t.getSymbol(ctx)
 	if err != nil {
-		return false, nil
+		return nil, err
 	}
 
 	decimals, err := t.getDecimals(ctx)
 	if err != nil {
-		return false, nil
+		return nil, err
 	}
 
 	totalSupply, err := t.getTotalSupply(ctx)
 	if err != nil {
-		return false, nil
+		return nil, err
 	}
 
 	krc20 := &KRC20{
@@ -101,7 +119,7 @@ func (t *token) KRC20Info(ctx context.Context) (bool, *KRC20) {
 		Decimals:    decimals,
 		TotalSupply: totalSupply,
 	}
-	return true, krc20
+	return krc20, nil
 }
 
 func (t *token) HolderBalance(ctx context.Context, holderAddress string) (*big.Int, error) {
