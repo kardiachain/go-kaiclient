@@ -20,9 +20,11 @@ package kardia
 
 import (
 	"context"
+	"errors"
 	"math/big"
 
 	"github.com/kardiachain/go-kaiclient/kardia/smc"
+	"github.com/kardiachain/go-kardia/lib/abi"
 	"github.com/kardiachain/go-kardia/lib/common"
 )
 
@@ -33,35 +35,50 @@ const (
 )
 
 type Token interface {
-	KRCType(ctx context.Context) int
+	TokenType() int
 	KRC20Info(ctx context.Context) (*KRC20, error)
 	KRC721Info(ctx context.Context) (*KRC721, error)
 	HolderBalance(ctx context.Context, holderAddress string) (*big.Int, error)
 	TotalSupply(ctx context.Context) (*big.Int, error)
+	ABI() *abi.ABI
 }
 
 type token struct {
-	node Node
-	c    *Contract
+	node    Node
+	c       *Contract
+	krcType int
 }
 
 func NewToken(node Node, address string) (Token, error) {
+	ctx := context.Background()
 	c := &Contract{
 		Bytecode:        smc.KRC20Bytecode,
 		ContractAddress: common.HexToAddress(address),
 	}
-	return &token{
+
+	t := &token{
 		node: node,
 		c:    c,
-	}, nil
+	}
+
+	krcType := t.getKRCType(ctx)
+	if krcType == TokenTypeUnknown {
+		return nil, errors.New("token type not support")
+	}
+	t.krcType = krcType
+	return t, nil
 }
 
-func (t *token) KRCType(ctx context.Context) int {
+func (t *token) TokenType() int {
+	return t.krcType
+}
+
+func (t *token) getKRCType(ctx context.Context) int {
 	if krc20Info, err := t.KRC20Info(ctx); err == nil && krc20Info != nil {
 		return TokenTypeKRC20
 	}
 	if krc721Info, err := t.KRC721Info(ctx); err == nil && krc721Info != nil {
-		return TokenTypeKRC20
+		return TokenTypeKRC721
 	}
 
 	return TokenTypeUnknown
@@ -130,6 +147,10 @@ func (t *token) KRC20Info(ctx context.Context) (*KRC20, error) {
 		TotalSupply: totalSupply,
 	}
 	return krc20, nil
+}
+
+func (t *token) ABI() *abi.ABI {
+	return t.c.ABI()
 }
 
 func (t *token) HolderBalance(ctx context.Context, holderAddress string) (*big.Int, error) {
