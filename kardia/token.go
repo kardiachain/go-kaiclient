@@ -23,7 +23,6 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/kardiachain/go-kaiclient/kardia/smc"
 	"github.com/kardiachain/go-kardia/lib/abi"
 	"github.com/kardiachain/go-kardia/lib/common"
 )
@@ -52,7 +51,6 @@ type token struct {
 func NewToken(node Node, address string) (Token, error) {
 	ctx := context.Background()
 	c := &Contract{
-		Bytecode:        smc.KRC20Bytecode,
 		ContractAddress: common.HexToAddress(address),
 	}
 
