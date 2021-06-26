@@ -107,3 +107,7 @@ func NewContract(abi *abi.ABI, addr common.Address) *Contract {
 	}
 	return c
 }
+
+func (c *Contract) ABI() *abi.ABI {
+	return c.Abi
+}
