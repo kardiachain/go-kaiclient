@@ -20,7 +20,6 @@ package kardia
 
 import (
 	"context"
-	"errors"
 	"math/big"
 
 	"github.com/kardiachain/go-kardia/lib/abi"
@@ -49,7 +48,6 @@ type token struct {
 }
 
 func NewToken(node Node, address string) (Token, error) {
-	ctx := context.Background()
 	c := &Contract{
 		ContractAddress: common.HexToAddress(address),
 	}
@@ -59,11 +57,11 @@ func NewToken(node Node, address string) (Token, error) {
 		c:    c,
 	}
 
-	krcType := t.getKRCType(ctx)
-	if krcType == TokenTypeUnknown {
-		return nil, errors.New("token type not support")
-	}
-	t.krcType = krcType
+	//krcType := t.getKRCType(ctx)
+	//if krcType == TokenTypeUnknown {
+	//	return nil, errors.New("token type not support")
+	//}
+	//t.krcType = krcType
 	return t, nil
 }
 
