@@ -67,10 +67,11 @@ func TestValidator_Details(t *testing.T) {
 	ctx := context.Background()
 	node, err := setupTestNodeInterface()
 	assert.Nil(t, err)
-	hodler := "0x4dAe614b2eA2FaeeDDE7830A2e7fcEDdAE9f9161"
+	hodler := "0xdC4A94805f449A64B27B589233C49d87eE99fBBc"
 	v, err := node.ValidatorInfo(ctx, hodler)
 	assert.Nil(t, err)
 	fmt.Printf("Validator Details: %+v\n", v)
+	fmt.Printf("Validator Details: %+v\n", v.SigningInfo)
 
 }
 
