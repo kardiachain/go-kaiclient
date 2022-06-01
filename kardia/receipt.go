@@ -141,6 +141,7 @@ func unpackLogIntoMap(a *abi.ABI, out map[string]interface{}, eventName string, 
 	// unpacking indexed arguments
 	var indexed abi.Arguments
 	for _, arg := range a.Events[eventName].Inputs {
+		lgr.Info("Args", zap.Any("Arg", arg))
 		if arg.Indexed {
 			indexed = append(indexed, arg)
 		}
