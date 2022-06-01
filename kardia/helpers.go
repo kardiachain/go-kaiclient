@@ -2,6 +2,7 @@
 package kardia
 
 import (
+	"go.uber.org/zap"
 	"strings"
 
 	"github.com/kardiachain/go-kaiclient/kardia/smc"
@@ -9,6 +10,9 @@ import (
 )
 
 func KRC721ABI() (*abi.ABI, error) {
+	lgr, _ := zap.NewDevelopment()
+	lgr.Info("KRC721 ABI", zap.String("ABI", smc.KRC721ABI))
+
 	r := strings.NewReader(smc.KRC721ABI)
 	abiData, err := abi.JSON(r)
 	if err != nil {
