@@ -20,7 +20,7 @@ package kardia
 
 import (
 	"encoding/hex"
-	"fmt"
+	"go.uber.org/zap"
 	"strconv"
 	"strings"
 
@@ -126,6 +126,7 @@ func UnpackLog(log *Log, smcABI *abi.ABI) (*Log, error) {
 
 // UnpackLogIntoMap unpacks a retrieved log into the provided map.
 func unpackLogIntoMap(a *abi.ABI, out map[string]interface{}, eventName string, log *Log) error {
+	lgr, _ := zap.NewDevelopment()
 	data, err := hex.DecodeString(log.Data)
 	if err != nil {
 		return err
@@ -143,8 +144,7 @@ func unpackLogIntoMap(a *abi.ABI, out map[string]interface{}, eventName string, 
 			indexed = append(indexed, arg)
 		}
 	}
-
-	fmt.Println("Indexed", len(indexed))
+	lgr.Info("Indexed", zap.Any("IndexedSize", len(indexed)), zap.Any("Indexed", indexed))
 
 	topicSize := len(log.Topics)
 	if topicSize <= 1 {
@@ -154,6 +154,6 @@ func unpackLogIntoMap(a *abi.ABI, out map[string]interface{}, eventName string, 
 	for i, topic := range log.Topics[1:] { // exclude the eventID (log.Topic[0])
 		topics[i] = common.HexToHash(topic)
 	}
-	fmt.Println("Topics Size: ", len(topics))
+	lgr.Info("Topics", zap.Any("TopicSize", len(topics)), zap.Any("Topics", topics))
 	return abi.ParseTopicsIntoMap(out, indexed, topics)
 }
