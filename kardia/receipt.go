@@ -20,6 +20,7 @@ package kardia
 
 import (
 	"encoding/hex"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -143,6 +144,8 @@ func unpackLogIntoMap(a *abi.ABI, out map[string]interface{}, eventName string, 
 		}
 	}
 
+	fmt.Println("Indexed", len(indexed))
+
 	topicSize := len(log.Topics)
 	if topicSize <= 1 {
 		return nil
@@ -151,5 +154,6 @@ func unpackLogIntoMap(a *abi.ABI, out map[string]interface{}, eventName string, 
 	for i, topic := range log.Topics[1:] { // exclude the eventID (log.Topic[0])
 		topics[i] = common.HexToHash(topic)
 	}
+	fmt.Println("Topics Size: ", len(topics))
 	return abi.ParseTopicsIntoMap(out, indexed, topics)
 }
