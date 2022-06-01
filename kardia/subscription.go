@@ -20,11 +20,9 @@ package kardia
 
 import (
 	"context"
-	"time"
 
 	"github.com/kardiachain/go-kardia/rpc"
 	"github.com/kardiachain/go-kardia/types"
-	"go.uber.org/zap"
 )
 
 type ISubscription interface {
@@ -33,18 +31,6 @@ type ISubscription interface {
 }
 
 func (n *node) KaiSubscribe(ctx context.Context, channel interface{}, args ...interface{}) (*rpc.ClientSubscription, error) {
-	go func() {
-		t := time.NewTicker(30 * time.Second)
-		defer t.Stop()
-		for {
-			select {
-			case <-t.C:
-				h, _ := n.LatestBlockNumber(ctx)
-				n.lgr.Debug("PingAt", zap.Uint64("H", h))
-			}
-
-		}
-	}()
 	return n.client.Subscribe(ctx, "kai", channel, args...)
 }
 

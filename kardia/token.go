@@ -20,101 +20,67 @@ package kardia
 
 import (
 	"context"
+	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/kardiachain/go-kardia/lib/abi"
+	"github.com/kardiachain/go-kardia/lib/abi/bind"
 	"github.com/kardiachain/go-kardia/lib/common"
-)
 
-const (
-	TokenTypeUnknown = 0
-	TokenTypeKRC20   = 1
-	TokenTypeKRC721  = 2
+	"github.com/kardiachain/go-kaiclient/kardia/smc"
 )
 
 type Token interface {
-	TokenType() int
 	KRC20Info(ctx context.Context) (*KRC20, error)
-	KRC721Info(ctx context.Context) (*KRC721, error)
 	HolderBalance(ctx context.Context, holderAddress string) (*big.Int, error)
-	TotalSupply(ctx context.Context) (*big.Int, error)
-	ABI() *abi.ABI
+	Transfer(ctx context.Context, auth *bind.TransactOpts, to common.Address, amount *big.Int) (string, error)
 }
 
 type token struct {
-	node    Node
-	c       *Contract
-	krcType int
+	node Node
+	c    *Contract
 }
 
-func NewToken(node Node, address string) (Token, error) {
+func (t *token) isKRC20() bool {
+	if t.c.ContractAddress.Equal(common.Address{}) {
+		return false
+	}
+	if t, err := t.KRC20Info(context.Background()); err != nil || t == nil {
+		return false
+	}
+
+	return true
+}
+
+func NewKRC20(node Node, address string, owner string) (Token, error) {
+	r := strings.NewReader(smc.KRC20ABI)
+	abiData, err := abi.JSON(r)
+	if err != nil {
+		return nil, err
+	}
 	c := &Contract{
+		Abi:             &abiData,
+		Bytecode:        smc.KRC20Bytecode,
 		ContractAddress: common.HexToAddress(address),
+		OwnerAddress:    common.HexToAddress(owner),
 	}
 
 	t := &token{
 		node: node,
 		c:    c,
 	}
-
-	//krcType := t.getKRCType(ctx)
-	//if krcType == TokenTypeUnknown {
-	//	return nil, errors.New("token type not support")
-	//}
-	//t.krcType = krcType
-	return t, nil
-}
-
-func (t *token) TokenType() int {
-	return t.krcType
-}
-
-func (t *token) getKRCType(ctx context.Context) int {
-	if krc20Info, err := t.KRC20Info(ctx); err == nil && krc20Info != nil {
-		return TokenTypeKRC20
-	}
-	if krc721Info, err := t.KRC721Info(ctx); err == nil && krc721Info != nil {
-		return TokenTypeKRC721
+	if !t.isKRC20() {
+		return nil, fmt.Errorf("not valid KRC20")
 	}
 
-	return TokenTypeUnknown
-}
-
-func (t *token) KRC721Info(ctx context.Context) (*KRC721, error) {
-	krc721ABI, err := KRC721ABI()
-	if err != nil {
-		return nil, err
-	}
-	t.c.Abi = krc721ABI
-	name, err := t.getName(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	symbol, err := t.getSymbol(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	totalSupply, err := t.getTotalSupply(ctx)
-	if err != nil {
-		return nil, err
-	}
-	krc721 := &KRC721{
-		Address:     t.c.ContractAddress,
-		Name:        name,
-		Symbol:      symbol,
-		TotalSupply: totalSupply,
-	}
-	return krc721, nil
+	return &token{
+		node: node,
+		c:    c,
+	}, nil
 }
 
 func (t *token) KRC20Info(ctx context.Context) (*KRC20, error) {
-	krc20ABI, err := KRC20ABI()
-	if err != nil {
-		return nil, err
-	}
-	t.c.Abi = krc20ABI
 	name, err := t.getName(ctx)
 	if err != nil {
 		return nil, err
@@ -145,10 +111,6 @@ func (t *token) KRC20Info(ctx context.Context) (*KRC20, error) {
 	return krc20, nil
 }
 
-func (t *token) ABI() *abi.ABI {
-	return t.c.ABI()
-}
-
 func (t *token) HolderBalance(ctx context.Context, holderAddress string) (*big.Int, error) {
 	address := common.HexToAddress(holderAddress)
 	payload, err := t.c.Abi.Pack("balanceOf", address)
@@ -168,10 +130,6 @@ func (t *token) HolderBalance(ctx context.Context, holderAddress string) (*big.I
 		return nil, err
 	}
 	return balance, nil
-}
-
-func (t *token) TotalSupply(ctx context.Context) (*big.Int, error) {
-	return t.getTotalSupply(ctx)
 }
 
 func (t *token) getName(ctx context.Context) (string, error) {
@@ -265,4 +223,14 @@ func (t *token) getOwnerBalance(ctx context.Context) (*big.Int, error) {
 	}
 
 	return balance, nil
+}
+
+func (t *token) Transfer(ctx context.Context, auth *bind.TransactOpts, to common.Address, amount *big.Int) (string, error) {
+	bc := NewBoundContract(t.node, t.c.Abi, t.c.ContractAddress)
+	tx, err := bc.Transact(auth, "transfer", to, amount)
+	if err != nil {
+		return "", err
+	}
+
+	return tx.Hash().String(), nil
 }

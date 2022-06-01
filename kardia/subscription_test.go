@@ -20,17 +20,11 @@ package kardia
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"fmt"
 	"log"
-	"math/big"
-	"strings"
 	"testing"
 	"time"
 
-	"github.com/kardiachain/go-kardia/lib/abi"
-	"github.com/kardiachain/go-kardia/lib/common"
-	"github.com/kardiachain/go-kardia/lib/crypto"
 	"github.com/kardiachain/go-kardia/rpc"
 	"github.com/kardiachain/go-kardia/types"
 	"github.com/stretchr/testify/assert"
@@ -60,7 +54,7 @@ func TestSubscription_NewBlockHead(t *testing.T) {
 }
 
 func subscribe(n Node, channel interface{}) (*rpc.ClientSubscription, error) {
-	args := FilterArgs{Address: []string{"0x9e003D7e05E19514aa76DcFF4EB2443522677288"}}
+	args := FilterArgs{Address: []string{"0x42d3400560F66A15F6D1345b894A854E5277270a"}}
 	sub, err := n.KaiSubscribe(context.Background(), channel, "logs", args)
 	if err != nil {
 		return nil, err
@@ -90,7 +84,7 @@ func TestSubscription_LogsFilter(t *testing.T) {
 	defer cancel()
 	lgr, err := zap.NewDevelopment()
 	assert.Nil(t, err)
-	url := "wss://ws-dev.kardiachain.io/ws"
+	url := "ws://10.10.0.251:8550/ws"
 	//url := "ws://10.10.0.251:8550/ws"
 	node, err := NewNode(url, lgr)
 	assert.Nil(t, err)
@@ -123,21 +117,10 @@ func TestSubscription_LogsFilter2(t *testing.T) {
 	defer cancel()
 	lgr, err := zap.NewDevelopment()
 	assert.Nil(t, err)
-	url := "wss://ws-dev.kardiachain.io/ws"
+	url := "wss://ws.kardiachain.io/ws"
 	//url := "ws://10.10.0.251:8550/ws"
 	node, err := NewNode(url, lgr)
 	assert.Nil(t, err)
-	go func() {
-		for {
-			_, err := node.LatestBlockNumber(context.Background())
-			if err != nil {
-				return
-			}
-			lgr.Debug("Ping by get latest block number", zap.Time("H", time.Now()))
-			time.Sleep(10 * time.Second)
-		}
-
-	}()
 
 	for {
 		lgr.Debug("Start subscribe flow")
@@ -149,7 +132,6 @@ func TestSubscription_LogsFilter2(t *testing.T) {
 			lgr.Debug("Cannot subscribe, closed", zap.Error(err))
 			return
 		}
-
 		err = start(sub, logEventCh)
 		switch err {
 		case nil:
@@ -192,224 +174,4 @@ func TestSubscription_LogsFilter3(t *testing.T) {
 		}
 	}
 
-}
-
-const testAbi = `[
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "test2",
-				"type": "address"
-			}
-		],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "constructor"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "index",
-				"type": "uint256"
-			}
-		],
-		"name": "EventOrderTest",
-		"type": "event"
-	},
-	{
-		"constant": false,
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "n",
-				"type": "uint256"
-			}
-		],
-		"name": "StressTestEvents",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "test2Address",
-		"outputs": [
-			{
-				"internalType": "contract Test2",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	}
-]`
-
-func pumpSubscribe(n Node, channel interface{}) (*rpc.ClientSubscription, error) {
-	args := FilterArgs{Address: []string{"0x11A8CC3A9e8e8AF4667C26B7CC68873C86Ef43B0", "0x60e3a154547E3D940EA7af651A65E838d7672Ba2"}} //test1, test2
-	//{"jsonrpc":"2.0", "id": 1, "method": "kai_subscribe", "params": ["logs", {"address": ["0x11A8CC3A9e8e8AF4667C26B7CC68873C86Ef43B0","0x60e3a154547E3D940EA7af651A65E838d7672Ba2"]}]}
-	sub, err := n.KaiSubscribe(context.Background(), channel, "logs", args)
-	if err != nil {
-		return nil, err
-	}
-
-	return sub, nil
-
-	////rpcClient, err := rpc.Dial("ws://10.10.0.68:8546/ws")
-	//rpcClient, err := rpc.Dial("ws://10.10.loo0.251:8550/ws")
-	//assert.Nil(t, err, "cannot connect") //NewHeads
-	//sub, err := rpcClient.Subscribe(context.Background(), "kai", headersCh, "newHeads")
-}
-
-var (
-	test1SmcAddr        = "0x11A8CC3A9e8e8AF4667C26B7CC68873C86Ef43B0"
-	gasLimit            = new(big.Int).SetInt64(39999999)
-	gasPrice            = new(big.Int).SetInt64(1000000000)
-	nonce        uint64 = 3533
-	total               = 0
-)
-
-func TestSubscription_LogsFilter_Pump(t *testing.T) {
-	_, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	lgr, err := zap.NewDevelopment()
-	assert.Nil(t, err)
-
-	httpNode, err := setupTestNodeInterface()
-	assert.Nil(t, err)
-	r := strings.NewReader(testAbi)
-	abiData, err := abi.JSON(r)
-	assert.Nil(t, err)
-	smc := Contract{
-		Abi:             &abiData,
-		ContractAddress: common.HexToAddress("0x11A8CC3A9e8e8AF4667C26B7CC68873C86Ef43B0"),
-	}
-
-	url := "wss://ws-dev.kardiachain.io"
-	//url := "ws://10.10.0.251:8550/ws"
-	node, err := NewNode(url, lgr)
-	assert.Nil(t, err)
-
-	lgr.Debug("Start subscribe flow")
-	time.Sleep(1 * time.Second)
-	logEventCh := make(chan *FilterLogs, 10)
-	sub, err := pumpSubscribe(node, logEventCh)
-	if err != nil {
-		// todo: handle close graceful
-		lgr.Debug("Cannot subscribe, closed", zap.Error(err))
-		return
-	}
-	var (
-		previousAddress       = "0x60e3a154547E3D940EA7af651A65E838d7672Ba2"
-		previous        int64 = 0
-	)
-	//pubKey, _, err := setupTestAccount()
-	//assert.Nil(t, err)
-	//fromAddress := crypto.PubkeyToAddress(*pubKey)
-	//nonce, err = httpNode.NonceAt(context.Background(), fromAddress.String())
-	//fmt.Printf("@@@@@@@@@@@@@@@@@@ NonceAt error %v\n", nonce)
-	//if err != nil {
-	//	fmt.Printf("@@@@@@@@@@@@@@@@@@ NonceAt error %v\n", err)
-	//}
-	recursiveCall(httpNode, smc)
-	for {
-		select {
-		case err := <-sub.Err():
-			lgr.Debug("subscribe err", zap.Error(err))
-		case log := <-logEventCh:
-			total++
-			if (log.LogIndex-1 == previous || log.LogIndex == 1) && !strings.EqualFold(log.Address, previousAddress) {
-				if log.LogIndex == 1 {
-					t.Log("new block", "previous", previous, "total", total, "blockHeight", log.BlockHeight)
-				} else if total == 4000 {
-					t.Log("total", total, "blockHeight", log.BlockHeight)
-				}
-				previous = log.LogIndex
-				previousAddress = log.Address
-			} else {
-				t.Fatal("wrong order of logs", "logIndex", log.LogIndex, "previous", previous)
-			}
-			//t.Log("event details", "address", log.Address, "index", log.LogIndex, "total", total, "hash", log.TransactionHash)
-		}
-	}
-}
-
-func TestApproveFADO(t *testing.T) {
-	var node Node
-	fadoSMCAddr := ``
-	stakerAddr := ``
-	stakingSMCAddress := ``
-	gasLimit = new(big.Int).SetInt64(39999999)
-	gasPrice = new(big.Int).SetInt64(1000000000)
-	stakeAmount, _ := new(big.Int).SetString(`100s000000000000000000`, 10) // 100 FADO
-	var privKey *ecdsa.PrivateKey
-	ctx := context.Background()
-
-	var stakeABI *abi.ABI
-	payload, err := stakeABI.Pack("approve", stakingSMCAddress, stakeAmount)
-	assert.Nil(t, err)
-
-	nonce, err := node.NonceAt(ctx, stakerAddr)
-	approveTx := types.NewTransaction(nonce, common.HexToAddress(fadoSMCAddr), new(big.Int).SetInt64(0), gasLimit.Uint64(), gasPrice, payload)
-	signedTx, err := types.SignTx(types.HomesteadSigner{}, approveTx, privKey)
-	if err != nil {
-		fmt.Printf("@@@@@@@@@@@@@@@@@@ SignTx error %v\n", err)
-	}
-
-	assert.Nil(t, node.SendTransaction(context.Background(), signedTx))
-}
-
-func recursiveCall(node Node, smc Contract) {
-	payload, err := smc.Abi.Pack("StressTestEvents", new(big.Int).SetInt64(20))
-	if err != nil {
-		fmt.Printf("@@@@@@@@@@@@@@@@@@ Pack error %v\n", err)
-	}
-
-	_, privKey, err := setupSender()
-	if err != nil {
-		fmt.Printf("@@@@@@@@@@@@@@@@@@ setupSender error %v\n", err)
-	}
-
-	nonce, err = node.NonceAt(context.Background(), "0xFBD5e2aFB7C0a7862b06964e29E676bf02183256")
-	if err != nil {
-		fmt.Println("Err", err)
-		return
-	}
-	fmt.Println("Nonce", nonce)
-	for i := 1; i <= 200; i++ {
-		tx := types.NewTransaction(nonce, common.HexToAddress(test1SmcAddr), new(big.Int).SetInt64(0), gasLimit.Uint64(), gasPrice, payload)
-		nonce++
-		signedTx, err := types.SignTx(types.HomesteadSigner{}, tx, privKey)
-		if err != nil {
-			fmt.Printf("@@@@@@@@@@@@@@@@@@ SignTx error %v\n", err)
-		}
-
-		err = node.SendTransaction(context.Background(), signedTx)
-		if err != nil {
-			fmt.Printf("@@@@@@@@@@@@@@@@@@ SendTransaction error %v\n", err)
-		}
-	}
-	fmt.Println("new block", "total", total)
-}
-
-func setupSender() (*ecdsa.PublicKey, *ecdsa.PrivateKey, error) {
-	privateKey, err := crypto.HexToECDSA("8063515889cb660ab1c25f48470b883c75515a83374797aef99f7f81c18ecd11")
-	if err != nil {
-		return nil, nil, err
-	}
-
-	publicKey := privateKey.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	if !ok {
-		return nil, nil, err
-	}
-
-	return publicKeyECDSA, privateKey, nil
 }

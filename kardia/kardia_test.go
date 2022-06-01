@@ -26,7 +26,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var url = "https://rpc.kardiachain.io"
+var url = "https://dev-1.kardiachain.io"
 
 func setupTestNodeInterface() (Node, error) {
 	lgr, err := zap.NewDevelopment()
