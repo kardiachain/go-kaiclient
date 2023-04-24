@@ -21,7 +21,6 @@ package kardia
 import (
 	"context"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/kardiachain/go-kardia"
 	"github.com/kardiachain/go-kardia/lib/common"
 	"github.com/kardiachain/go-kardia/lib/rlp"
@@ -68,7 +67,7 @@ func (n *node) SendTransaction(ctx context.Context, tx *types.Transaction) error
 	if err != nil {
 		return err
 	}
-	return n.client.CallContext(ctx, nil, "tx_sendRawTransaction", hexutil.Encode(data))
+	return n.client.CallContext(ctx, nil, "tx_sendRawTransaction", common.Encode(data))
 }
 
 // SendRawTransaction injects a signed transaction into the pending pool for execution.
@@ -79,5 +78,5 @@ func (n *node) SendRawTransaction(ctx context.Context, tx *types.Transaction) er
 	if err != nil {
 		return err
 	}
-	return n.client.CallContext(ctx, nil, "tx_sendRawTransaction", hexutil.Encode(data))
+	return n.client.CallContext(ctx, nil, "tx_sendRawTransaction", common.Encode(data))
 }
