@@ -32,7 +32,7 @@ func TestBlock_BlockByHeight(t *testing.T) {
 	ctx := context.Background()
 	b, err := node.BlockByHeight(ctx, 78785)
 	assert.Nil(t, err)
-	assert.Equal(t, 78785, b.Height)
+	assert.Equal(t, uint64(78785), b.Height)
 }
 
 func TestBlock_BlockByHash(t *testing.T) {
