@@ -8,5 +8,6 @@ require (
 	github.com/kardiachain/go-kardia v1.2.3-0.20210525082104-2913103edf92
 	github.com/shopspring/decimal v1.2.0
 	github.com/stretchr/testify v1.7.0
+	github.com/valyala/fasthttp v1.47.0 // indirect
 	go.uber.org/zap v1.16.0
 )
